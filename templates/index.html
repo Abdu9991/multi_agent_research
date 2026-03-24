@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Multi-Agent Research</title>
+  <style>
+    :root {
+      --bg: #f5efe4;
+      --paper: rgba(255, 252, 245, 0.88);
+      --ink: #1d1a16;
+      --muted: #6c6258;
+      --accent: #0f766e;
+      --accent-2: #c2410c;
+      --line: rgba(29, 26, 22, 0.12);
+      --shadow: 0 24px 80px rgba(29, 26, 22, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-block-size: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(194, 65, 12, 0.18), transparent 24%),
+        linear-gradient(135deg, #f5efe4 0%, #f0e7d7 45%, #efe3ce 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .shell {
+      inline-size: min(980px, 100%);
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1.1fr 0.9fr;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      animation: rise 500ms ease-out;
+    }
+
+    .hero,
+    .panel {
+      padding: 32px;
+    }
+
+    .hero {
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.08)),
+        repeating-linear-gradient(
+          -24deg,
+          rgba(15, 118, 110, 0.06),
+          rgba(15, 118, 110, 0.06) 12px,
+          rgba(255, 255, 255, 0.02) 12px,
+          rgba(255, 255, 255, 0.02) 24px
+        );
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: rgba(15, 118, 110, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(15, 118, 110, 0.18);
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      font-size: clamp(2.4rem, 4vw, 4.5rem);
+      line-height: 0.95;
+      font-weight: 700;
+    }
+
+    .lead {
+      margin: 0;
+      max-inline-size: 34rem;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-block-start: 28px;
+    }
+
+    .meta-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.52);
+      border: 1px solid var(--line);
+    }
+
+    .meta-card strong {
+      display: block;
+      margin-block-end: 6px;
+      font-size: 0.95rem;
+    }
+
+    .meta-card span {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .panel {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      background: rgba(255, 255, 255, 0.52);
+      border-inline-start: 1px solid var(--line);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(29, 26, 22, 0.04);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+
+    .dot {
+      inline-size: 10px;
+      block-size: 10px;
+      border-radius: 50%;
+      background: {% if llm_configured %}#15803d{% else %}#b45309{% endif %};
+      box-shadow: 0 0 0 6px rgba(21, 128, 61, 0.08);
+    }
+
+    label {
+      display: block;
+      margin-block-end: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    textarea {
+      inline-size: 100%;
+      min-block-size: 180px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      resize: vertical;
+      font: inherit;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    textarea:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.22);
+      border-color: rgba(15, 118, 110, 0.35);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #115e59);
+      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.24);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: rgba(29, 26, 22, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .output {
+      min-block-size: 220px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+      white-space: pre-wrap;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .history {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.78);
+      padding: 14px 16px;
+    }
+
+    .history h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .history-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      max-block-size: 190px;
+      overflow: auto;
+    }
+
+    .history-item {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(29, 26, 22, 0.03);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .history-controls {
+      display: flex;
+      gap: 8px;
+      margin-block-end: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-controls input,
+    .history-controls select {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+      font: inherit;
+      color: var(--ink);
+      font-size: 0.85rem;
+    }
+
+    .history-controls button {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .trend {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 6px;
+      block-size: 64px;
+      align-items: end;
+      margin-block-end: 10px;
+    }
+
+    .trend-bar {
+      border-radius: 8px 8px 4px 4px;
+      background: linear-gradient(180deg, rgba(15, 118, 110, 0.28), rgba(15, 118, 110, 0.86));
+      min-block-size: 4px;
+    }
+
+    .trend-empty {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-block-end: 10px;
+    }
+
+    .history-meta {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-inline-size: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        border-inline-start: 0;
+        border-block-start: 1px solid var(--line);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <span class="eyebrow">CrewAI Browser Console</span>
+      <h1>Ask the multi-agent workflow to solve a task.</h1>
+      <p class="lead">
+        This page sends your prompt to the Flask API, which delegates planning, execution, and validation through the CrewAI flow already wired into the project.
+      </p>
+
+      <div class="meta">
+        <div class="meta-card">
+          <strong>Flow</strong>
+          <span>Strategic Planner, Tool Executor, and Quality Observer run in sequence.</span>
+        </div>
+        <div class="meta-card">
+          <strong>Route</strong>
+          <span>The UI submits directly to <code>/solve</code> and renders the API response.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="status">
+        <span class="dot"></span>
+        {% if llm_configured %}LLM credentials detected{% else %}LLM credentials missing{% endif %}
+      </div>
+
+      <form id="solve-form">
+        <label for="problem">Problem</label>
+        <textarea id="problem" name="problem">Calculate the area of a circle with radius 5</textarea>
+        <div class="actions">
+          <button class="primary" type="submit">Run Workflow</button>
+          <button class="secondary" type="button" id="clear-button">Clear</button>
+        </div>
+      </form>
+
+      <div>
+        <label for="output">Response</label>
+        <div class="output" id="output">Waiting for input.</div>
+      </div>
+
+      <section class="history">
+        <h3>Recent Runs</h3>
+        <div class="history-controls">
+          <select id="status-filter" title="Filter runs by status" aria-label="Filter runs by status">
+            <option value="">All statuses</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+            <option value="blocked">Blocked</option>
+            <option value="invalid_request">Invalid request</option>
+          </select>
+          <input id="query-filter" type="text" placeholder="Search text" title="Search run history" aria-label="Search run history">
+          <button class="secondary" type="button" id="apply-filters">Apply</button>
+        </div>
+        <div id="trend" class="trend-empty">No duration trend yet.</div>
+        <ul class="history-list" id="history-list">
+          <li class="history-item">No runs yet.</li>
+        </ul>
+      </section>
+
+      <p class="hint">If credentials are not configured, the API will return a deployment-safe error instead of crashing.</p>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("solve-form");
+    const problemInput = document.getElementById("problem");
+    const output = document.getElementById("output");
+    const clearButton = document.getElementById("clear-button");
+    const historyList = document.getElementById("history-list");
+    const trend = document.getElementById("trend");
+    const statusFilter = document.getElementById("status-filter");
+    const queryFilter = document.getElementById("query-filter");
+    const applyFiltersButton = document.getElementById("apply-filters");
+
+    function showOutput(value) {
+      output.textContent = value;
+    }
+
+    function renderHistory(runs) {
+      if (!Array.isArray(runs) || runs.length === 0) {
+        historyList.innerHTML = '<li class="history-item">No runs yet.</li>';
+        return;
+      }
+
+      historyList.innerHTML = runs
+        .map((run) => {
+          const title = run.problem ? run.problem : "Invalid request";
+          const subtitle = `${run.status} in ${run.duration_ms}ms`;
+          const details = run.error || run.result_preview || "";
+          return `
+            <li class="history-item">
+              <div><strong>${title}</strong></div>
+              <div class="history-meta">${subtitle}</div>
+              <div>${details}</div>
+            </li>
+          `;
+        })
+        .join("");
+    }
+
+    function renderTrend(runs) {
+      const durations = (runs || [])
+        .map((run) => Number(run.duration_ms || 0))
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .slice(0, 8)
+        .reverse();
+
+      if (durations.length === 0) {
+        trend.className = "trend-empty";
+        trend.textContent = "No duration trend yet.";
+        return;
+      }
+
+      const maxDuration = Math.max(...durations);
+      trend.className = "trend";
+      trend.innerHTML = durations
+        .map((duration) => {
+          const ratio = maxDuration > 0 ? duration / maxDuration : 0;
+          const height = Math.max(6, Math.round(ratio * 64));
+          return `<div class="trend-bar" style="block-size:${height}px" title="${duration}ms"></div>`;
+        })
+        .join("");
+    }
+
+    async function refreshHistory() {
+      try {
+        const params = new URLSearchParams({ limit: "8" });
+        if (statusFilter.value) {
+          params.set("status", statusFilter.value);
+        }
+        if (queryFilter.value.trim()) {
+          params.set("q", queryFilter.value.trim());
+        }
+
+        const response = await fetch(`/runs?${params.toString()}`);
+        const payload = await response.json();
+        const runs = payload.runs || [];
+        renderHistory(runs);
+        renderTrend(runs);
+      } catch {
+        historyList.innerHTML = '<li class="history-item">Unable to load run history.</li>';
+        trend.className = "trend-empty";
+        trend.textContent = "Unable to load duration trend.";
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const problem = problemInput.value.trim();
+
+      if (!problem) {
+        showOutput("Enter a problem before submitting.");
+        return;
+      }
+
+      showOutput("Running workflow...");
+
+      try {
+        const response = await fetch("/solve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ problem })
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+          showOutput(payload.error || "Request failed.");
+          await refreshHistory();
+          return;
+        }
+
+        const text = payload.result?.text || JSON.stringify(payload, null, 2);
+        const duration = Number.isFinite(payload.duration_ms) ? `\n\nDuration: ${payload.duration_ms}ms` : "";
+        showOutput(`${text}${duration}`);
+        await refreshHistory();
+      } catch (error) {
+        showOutput(error.message || "Unexpected client-side error.");
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      problemInput.value = "";
+      showOutput("Waiting for input.");
+      problemInput.focus();
+    });
+
+    applyFiltersButton.addEventListener("click", () => {
+      refreshHistory();
+    });
+
+    refreshHistory();
+  </script>
+</body>
+</html>

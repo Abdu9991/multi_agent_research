@@ -1,0 +1,5 @@
+crewai
+flask
+gunicorn
+python-dotenv
+pydantic

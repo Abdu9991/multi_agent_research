@@ -9,6 +9,31 @@ load_dotenv()
 
 app = Flask(__name__)
 
+OPENAI_KEY_CANDIDATES = [
+    "OPENAI_API_KEY",
+    "OPENAI_KEY",
+    "OPENAI_TOKEN",
+    "OPEN_API_KEY",
+]
+
+
+def resolve_openai_api_key():
+    for var_name in OPENAI_KEY_CANDIDATES:
+        value = (os.getenv(var_name) or "").strip()
+        if value:
+            return var_name, value
+    return None, None
+
+
+def normalize_openai_api_key():
+    source_var, key_value = resolve_openai_api_key()
+    if key_value and source_var != "OPENAI_API_KEY":
+        os.environ["OPENAI_API_KEY"] = key_value
+    return source_var
+
+
+OPENAI_KEY_SOURCE = normalize_openai_api_key()
+
 
 def is_llm_configured():
     return bool(os.getenv("OPENAI_API_KEY"))
@@ -38,6 +63,7 @@ def index():
             "service": "multi-agent-research",
             "status": "ok",
             "llm_configured": is_llm_configured(),
+            "llm_key_source": OPENAI_KEY_SOURCE,
             "endpoints": ["GET /", "GET /health", "GET /ui", "GET /runs", "POST /solve"],
             "message": "POST /solve with JSON {\"problem\": \"...\"} to run the CrewAI workflow.",
         }
@@ -51,7 +77,7 @@ def ui():
 
 @app.get("/health")
 def health_check():
-    return jsonify({"status": "healthy", "llm_configured": is_llm_configured()})
+    return jsonify({"status": "healthy", "llm_configured": is_llm_configured(), "llm_key_source": OPENAI_KEY_SOURCE})
 
 
 @app.get("/runs")

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: crewai-pizza-order-agent
+    name: multi-agent-research
     runtime: docker
     plan: free
     autoDeploy: true

@@ -72,10 +72,16 @@ $env:OPENAI_API_KEY="your_api_key"
 $env:OPENAI_MODEL="gpt-4o-mini"
 ```
 
-4. Start the API:
+4. Start the API with either command:
 
 ```powershell
 python app.py
+```
+
+Or:
+
+```powershell
+flask run
 ```
 
 5. Test the API:

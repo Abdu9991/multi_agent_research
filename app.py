@@ -2,7 +2,10 @@ import os
 import time
 
 from flask import Flask, jsonify, render_template, request
+from dotenv import load_dotenv
 from metrics import get_recent_runs, record_run
+
+load_dotenv()
 
 app = Flask(__name__)
 

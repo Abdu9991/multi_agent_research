@@ -38,12 +38,12 @@ def solve(payload: dict):
     return {"result": run_task(payload["problem"])}
 
 
-def _first_available_port(start_port: int, max_attempts: int = 20) -> int:
+def _first_available_port(host: str, start_port: int, max_attempts: int = 20) -> int:
+    bind_host = "0.0.0.0" if host in {"", "0.0.0.0"} else host
     for port in range(start_port, start_port + max_attempts):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                sock.bind(("0.0.0.0", port))
+                sock.bind((bind_host, port))
                 return port
             except OSError:
                 continue
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     preferred_port = _int_env("PORT", 3000)
     max_attempts = max(1, _int_env("PORT_SCAN_ATTEMPTS", 20))
-    selected_port = _first_available_port(preferred_port, max_attempts)
+    selected_port = _first_available_port(host, preferred_port, max_attempts)
     if selected_port != preferred_port:
         print(f"Port {preferred_port} is in use. Starting on port {selected_port} instead.")
     uvicorn.run(app, host=host, port=selected_port)

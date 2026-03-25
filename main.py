@@ -29,6 +29,17 @@ def _is_connection_error(exc):
     )
 
 
+def _is_auth_error(exc):
+    text = str(exc).lower()
+    return (
+        "incorrect api key" in text
+        or "invalid api key" in text
+        or "authentication" in text
+        or "unauthorized" in text
+        or "401" in text
+    )
+
+
 def _safe_eval(node):
     if isinstance(node, ast.Constant):
         if isinstance(node.value, (int, float)):
@@ -57,45 +68,64 @@ def _fallback_arithmetic(problem):
     return f"Fallback result: {expr} = {result}"
 
 
+def _fallback(problem):
+    return _fallback_arithmetic(problem)
+
+
 def run_math_task(problem):
+    direct_result = _fallback(problem)
+    if direct_result:
+        return direct_result
+
     from agents import strategic_planner, tool_executor, quality_observer
 
     planning_task = Task(
-        description=f"Create a plan to solve: {problem}",
+        description=f"Create a short step-by-step plan to solve: {problem}. Return the plan directly without using tools unless necessary.",
         expected_output="Step-by-step plan",
-        agent=strategic_planner
+        agent=strategic_planner,
     )
-    
+
     execution_task = Task(
-        description=f"Solve this problem: {problem}. Use Calculator tool.",
+        description=f"Solve this problem: {problem}. Use the Calculator tool for arithmetic if needed and return the final answer clearly.",
         expected_output="Complete solution with answer",
-        agent=tool_executor
+        agent=tool_executor,
     )
-    
+
     validation_task = Task(
-        description="Validate the solution is correct",
+        description="Validate that the solution is correct and return a concise confirmation.",
         expected_output="Validation result",
-        agent=quality_observer
+        agent=quality_observer,
     )
-    
+
     crew = Crew(
         agents=[strategic_planner, tool_executor, quality_observer],
         tasks=[planning_task, execution_task, validation_task],
         process=Process.sequential,
-        verbose=True
+        verbose=True,
     )
-    
+
     attempts = 3
     for attempt in range(1, attempts + 1):
         try:
             return crew.kickoff()
         except Exception as exc:
-            if not _is_connection_error(exc) or attempt == attempts:
-                fallback = _fallback_arithmetic(problem)
-                if fallback:
-                    return fallback
-                raise
-            time.sleep(attempt)
+            print(f"[WARN] Attempt {attempt} failed: {exc}")
+
+            if _is_auth_error(exc):
+                return (
+                    "ERROR: OpenAI API key is invalid or missing.\n"
+                    "Check your OPENAI_API_KEY in the environment or .env file."
+                )
+
+            if _is_connection_error(exc) and attempt < attempts:
+                time.sleep(attempt)
+                continue
+
+            fallback = _fallback(problem)
+            if fallback:
+                return fallback
+
+            raise
 
 if __name__ == "__main__":
     problem = "Calculate the area of a circle with radius 5"

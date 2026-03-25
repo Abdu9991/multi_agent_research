@@ -64,7 +64,7 @@ def index():
             "status": "ok",
             "llm_configured": is_llm_configured(),
             "llm_key_source": OPENAI_KEY_SOURCE,
-            "endpoints": ["GET /", "GET /health", "GET /ui", "GET /runs", "POST /solve"],
+            "endpoints": ["GET /", "GET /health", "GET /ui", "GET /runs", "GET /solve", "POST /solve"],
             "message": "POST /solve with JSON {\"problem\": \"...\"} to run the CrewAI workflow.",
         }
     )
@@ -92,6 +92,20 @@ def recent_runs():
             "filters": {"limit": limit, "status": status, "q": query},
             "runs": runs,
         }
+    )
+
+
+@app.get("/solve")
+def solve_help():
+    return (
+        jsonify(
+            {
+                "status": "method_not_allowed",
+                "error": "Use POST /solve with JSON {\"problem\": \"...\"}.",
+                "example": {"problem": "What is 12*12?"},
+            }
+        ),
+        405,
     )
 
 

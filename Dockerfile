@@ -33,8 +33,4 @@ USER appuser
 
 EXPOSE 10000
 
-# Flask:
-# CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000"]
-
-# FastAPI (recommended):
-CMD ["gunicorn", "app:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:10000"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --threads 2 --timeout ${GUNICORN_TIMEOUT:-180} app:app"]

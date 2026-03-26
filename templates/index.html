@@ -493,7 +493,7 @@
         const payload = await response.json();
 
         if (!response.ok) {
-          showOutput(payload.error || "Request failed.");
+          showOutput(payload.detail || payload.error || "Request failed.");
           await refreshHistory();
           return;
         }

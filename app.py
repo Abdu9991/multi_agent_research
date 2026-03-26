@@ -3,6 +3,7 @@ import os
 import socket
 import time
 from datetime import datetime, timezone
+from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +27,7 @@ app = FastAPI(
 )
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+SOLVE_TIMEOUT_SECONDS = int(os.getenv("SOLVE_TIMEOUT_SECONDS", "90"))
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +73,48 @@ def _save_run(entry: dict) -> None:
     entry["id"] = next_id
     runs.append(entry)
     RUNS_FILE.write_text(json.dumps(runs, indent=2), encoding="utf-8")
+
+
+def _solve_worker(problem: str, queue: Queue) -> None:
+    try:
+        from main import run_task
+
+        queue.put({"ok": True, "value": str(run_task(problem))})
+    except Exception as exc:  # pragma: no cover - runtime safety boundary
+        queue.put({"ok": False, "value": str(exc)})
+
+
+def _run_task_with_timeout(problem: str, timeout_seconds: int) -> str:
+    queue: Queue = Queue()
+    process = Process(target=_solve_worker, args=(problem, queue))
+    process.start()
+    process.join(timeout=timeout_seconds)
+
+    if process.is_alive():
+        process.terminate()
+        process.join(timeout=2)
+        raise TimeoutError(f"Timed out after {timeout_seconds} seconds")
+
+    if queue.empty():
+        raise RuntimeError("Solve worker exited without a response")
+
+    payload = queue.get()
+    if payload.get("ok"):
+        return payload.get("value", "")
+    raise RuntimeError(payload.get("value", "Unknown solve worker error"))
+
+
+def _looks_like_failure_result(result_text: str) -> bool:
+    normalized = result_text.strip().lower()
+    failure_markers = [
+        "error:",
+        "invalid api key",
+        "openai api key is invalid",
+        "timeout",
+        "apiconnectionerror",
+        "cannot import name",
+    ]
+    return any(marker in normalized for marker in failure_markers)
 
 
 # ---------------------------------------------------------------------------
@@ -149,9 +193,11 @@ def solve(payload: SolveRequest):
     timestamp = datetime.now(timezone.utc).isoformat()
 
     try:
-        from main import run_task  # lazy import — keeps /health alive without LLM env
+        result_text = _run_task_with_timeout(problem, SOLVE_TIMEOUT_SECONDS)
 
-        result_text = str(run_task(problem))
+        if _looks_like_failure_result(result_text):
+            raise RuntimeError(result_text)
+
         elapsed_ms = int((time.perf_counter() - start) * 1000)
 
         _save_run({
@@ -164,6 +210,24 @@ def solve(payload: SolveRequest):
         })
 
         return {"result": {"text": result_text}, "duration_ms": elapsed_ms}
+
+    except TimeoutError as exc:
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        error_msg = (
+            f"Solve timed out after {SOLVE_TIMEOUT_SECONDS} seconds. "
+            "If Ollama is configured, verify it is reachable and responsive."
+        )
+
+        _save_run({
+            "timestamp": timestamp,
+            "problem": problem,
+            "status": "failed",
+            "duration_ms": elapsed_ms,
+            "error": error_msg,
+            "result_preview": "",
+        })
+
+        raise HTTPException(status_code=504, detail=error_msg) from exc
 
     except Exception as exc:
         elapsed_ms = int((time.perf_counter() - start) * 1000)

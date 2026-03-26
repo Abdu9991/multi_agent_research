@@ -1,5 +1,6 @@
 
 import os
+import urllib.request
 
 from dotenv import load_dotenv
 from crewai import Agent, LLM
@@ -7,7 +8,7 @@ from crewai import Agent, LLM
 try:
     from crewai.llms import Ollama, OpenAI
 except ImportError:
-    # CrewAI 1.11.x may expose only the generic LLM class.
+    # crewai 1.11.x only exposes the generic LLM class
     class Ollama:  # type: ignore[no-redef]
         def __new__(cls, base_url: str, model: str, temperature: float = 0.7):
             return LLM(
@@ -31,8 +32,6 @@ from tools import (
     reasoning_logger_tool,
 )
 
-# agents.py
-
 load_dotenv()
 
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
@@ -43,22 +42,38 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-# -------- LLM Selection --------
+
+def _ollama_reachable(base_url: str, timeout: float = 3.0) -> bool:
+    """Return True only if Ollama responds within *timeout* seconds.
+    Prevents a 600-second litellm hang when Ollama is configured but not running."""
+    try:
+        urllib.request.urlopen(
+            f"{base_url.rstrip('/')}/api/version", timeout=timeout
+        )
+        return True
+    except Exception:
+        return False
+
+
+# -------- LLM Selection (Ollama → OpenAI, fail-fast) --------
+llm = None
+
 if OLLAMA_BASE_URL and OLLAMA_MODEL:
-    llm = Ollama(
-        base_url=OLLAMA_BASE_URL,
-        model=OLLAMA_MODEL,
-        temperature=TEMPERATURE,
-    )
-    print(f"[LLM] Using Ollama: {OLLAMA_MODEL}")
-elif OPENAI_API_KEY:
-    llm = OpenAI(
-        model=OPENAI_MODEL,
-        temperature=TEMPERATURE,
-    )
-    print(f"[LLM] Using OpenAI: {OPENAI_MODEL}")
-else:
-    raise RuntimeError("No LLM configured")
+    if _ollama_reachable(OLLAMA_BASE_URL):
+        llm = Ollama(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, temperature=TEMPERATURE)
+        print(f"[LLM] Using Ollama: {OLLAMA_MODEL} @ {OLLAMA_BASE_URL}")
+    else:
+        print(f"[LLM] Ollama unreachable at {OLLAMA_BASE_URL} — falling back to OpenAI")
+
+if llm is None:
+    if OPENAI_API_KEY:
+        llm = OpenAI(model=OPENAI_MODEL, temperature=TEMPERATURE)
+        print(f"[LLM] Using OpenAI: {OPENAI_MODEL}")
+    else:
+        raise RuntimeError(
+            "No LLM available. Either start Ollama (set OLLAMA_BASE_URL + OLLAMA_MODEL) "
+            "or set OPENAI_API_KEY in your .env file."
+        )
 
 # -------- Agents --------
 strategic_planner = Agent(

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import socket
 import time
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
+from tools import CalculatorTool  # pre-load crewai at startup so first /solve is fast
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -104,6 +106,30 @@ def _run_task_with_timeout(problem: str, timeout_seconds: int) -> str:
     raise RuntimeError(payload.get("value", "Unknown solve worker error"))
 
 
+# ---------------------------------------------------------------------------
+# Math expression shortcut (bypasses LLM entirely for pure arithmetic)
+# ---------------------------------------------------------------------------
+
+# Matches expressions made only of digits, operators, parens, and known math fns.
+_MATH_EXPR_RE = re.compile(
+    r'^[\d\s+\-*/().%^,]+$'
+    r'|^(sqrt|sin|cos|tan|log|abs|round)\s*\(',
+    re.IGNORECASE,
+)
+
+
+def _try_calculator(problem: str) -> Optional[str]:
+    """Return an instant calculator result for pure arithmetic, or None to fall
+    through to the full CrewAI workflow."""
+    expr = problem.strip()
+    if not _MATH_EXPR_RE.match(expr):
+        return None
+    result = CalculatorTool()._run(expr)
+    if result.startswith("Error:"):
+        return None  # malformed expression — let LLM handle it
+    return result
+
+
 def _looks_like_failure_result(result_text: str) -> bool:
     normalized = result_text.strip().lower()
     failure_markers = [
@@ -191,6 +217,20 @@ def solve(payload: SolveRequest):
     problem = payload.problem.strip()
     start = time.perf_counter()
     timestamp = datetime.now(timezone.utc).isoformat()
+
+    # --- Fast path: pure arithmetic → no LLM needed ---
+    quick_result = _try_calculator(problem)
+    if quick_result is not None:
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        _save_run({
+            "timestamp": timestamp,
+            "problem": problem,
+            "status": "completed",
+            "duration_ms": elapsed_ms,
+            "error": None,
+            "result_preview": quick_result[:200],
+        })
+        return {"result": {"text": quick_result}, "duration_ms": elapsed_ms}
 
     try:
         result_text = _run_task_with_timeout(problem, SOLVE_TIMEOUT_SECONDS)

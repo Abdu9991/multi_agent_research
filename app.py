@@ -3,11 +3,67 @@ import socket
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
-app = FastAPI()
+app = FastAPI(
+    title="Multi-Agent Research API",
+    description="FastAPI wrapper for CrewAI multi-agent workflow",
+    version="1.0.0"
+)
 
 
-@app.get("/")
+# Request/Response Models
+class SolveRequest(BaseModel):
+    """Request model for POST /solve endpoint"""
+    problem: str = Field(
+        ...,
+        min_length=1,
+        description="The problem or task for the multi-agent system to solve"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "problem": "Calculate the area of a circle with radius 5"
+            }
+        }
+
+
+class SolveResponse(BaseModel):
+    """Response model for successful /solve endpoint"""
+    result: str = Field(description="The result from the multi-agent system")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "result": "The area of the circle with radius 5 is approximately 78.54 square units."
+            }
+        }
+
+
+class HealthResponse(BaseModel):
+    """Response model for /health endpoint"""
+    status: str = Field(description="Service status")
+    service: str = Field(description="Service name")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "ok",
+                "service": "multi-agent-research"
+            }
+        }
+
+
+class IndexResponse(BaseModel):
+    """Response model for GET / endpoint"""
+    service: str = Field(description="Service name")
+    status: str = Field(description="Service status")
+    endpoints: list = Field(description="Available endpoints")
+    message: str = Field(description="Usage message")
+
+
+@app.get("/", response_model=IndexResponse)
 def index():
     return {
         "service": "multi-agent-research",
@@ -17,12 +73,12 @@ def index():
     }
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health():
     return {"status": "ok", "service": "multi-agent-research"}
 
 
-@app.get("/solve")
+@app.get("/solve", response_model=dict)
 def solve_help():
     return {
         "status": "method_not_allowed",
@@ -31,17 +87,18 @@ def solve_help():
     }
 
 
-@app.post("/solve")
-def solve(payload: dict):
-    problem = (payload or {}).get("problem")
-    if not isinstance(problem, str) or not problem.strip():
-        raise HTTPException(status_code=400, detail="'problem' must be a non-empty string")
-
+@app.post("/solve", response_model=SolveResponse)
+def solve(payload: SolveRequest):
+    """
+    Solve a problem using the multi-agent system.
+    
+    The request should contain a 'problem' field with a description of what needs to be solved.
+    """
     try:
         # Lazy import keeps / and /health alive even when LLM env is missing.
         from main import run_task
 
-        return {"result": run_task(problem.strip())}
+        return {"result": run_task(payload.problem.strip())}
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Solve unavailable: {exc}") from exc
 

@@ -1,136 +1,268 @@
 # Multi-Agent Research API
 
-This project wraps the existing CrewAI workflow in a small Flask API so it can be deployed on Render or run in Docker.
+A FastAPI-based service wrapping a CrewAI multi-agent workflow. The system uses four specialized agents (strategic planner, tool executor, quality observer, and reflective analyst) to solve complex problems through collaborative reasoning.
 
-## Endpoints
+## Deployment
 
-- `GET /` returns service metadata.
-- `GET /health` returns a health check response.
-- `GET /ui` serves a browser-based frontend for testing the workflow.
-- `GET /runs` returns recent run history and supports `limit`, `status`, and `q` filters.
-- `POST /solve` runs the workflow.
+- **Production**: Deployed on [Render](https://multi-agent-research-uktm.onrender.com/)
+- **Docker**: Containerized with non-root user execution and ASGI workers
+- **Framework**: FastAPI 0.116.1 with Uvicorn
 
-Successful `POST /solve` responses use this shape:
+## API Endpoints
 
+### GET /
+
+Service metadata and available endpoints.
+
+**Response** (200 OK):
 ```json
 {
-  "status": "completed",
-  "problem": "Calculate the area of a circle with radius 5",
-  "result": {
-    "text": "The area of the circle with radius 5 is approximately 78.54 square units."
+  "service": "multi-agent-research",
+  "status": "ok",
+  "endpoints": ["GET /", "GET /health", "GET /solve", "POST /solve"],
+  "message": "Use POST /solve with JSON: {\"problem\": \"...\"}"
+}
+```
+
+**cURL example**:
+```bash
+curl -X GET http://localhost:3000/
+```
+
+---
+
+### GET /health
+
+Health check endpoint for monitoring and load balancers.
+
+**Response** (200 OK):
+```json
+{
+  "status": "ok",
+  "service": "multi-agent-research"
+}
+```
+
+**cURL example**:
+```bash
+curl -X GET http://localhost:3000/health
+```
+
+---
+
+### GET /solve
+
+Method information (POST is the supported method).
+
+**Response** (200 OK):
+```json
+{
+  "status": "method_not_allowed",
+  "message": "Use POST /solve with JSON body.",
+  "example": {
+    "problem": "Calculate the area of a circle with radius 9"
   }
 }
 ```
 
-Example `GET /runs` response shape:
-
-```json
-{
-  "status": "ok",
-  "filters": {
-    "limit": 8,
-    "status": "completed",
-    "q": "circle"
-  },
-  "runs": [
-    {
-      "id": 4,
-      "timestamp": "2026-03-24T01:24:20.668154+00:00",
-      "problem": "Calculate the area of a circle with radius 5",
-      "status": "completed",
-      "duration_ms": 16739,
-      "error": null,
-      "result_preview": "The area of the circle is approximately 78.54..."
-    }
-  ]
-}
+**cURL example**:
+```bash
+curl -X GET http://localhost:3000/solve
 ```
 
-Example request body:
+---
 
+### POST /solve
+
+Submit a problem to the multi-agent system for solving.
+
+**Request** (Content-Type: application/json):
 ```json
 {
   "problem": "Calculate the area of a circle with radius 5"
 }
 ```
 
-## Local setup
+**Request Fields**:
+- `problem` (string, required): The problem or task description. Must be non-empty.
 
-1. Create and activate a virtual environment.
-2. Install dependencies:
+**Response** (200 OK):
+```json
+{
+  "result": "The area of the circle with radius 5 is approximately 78.54 square units."
+}
+```
 
+**Error Responses**:
+
+| Status | Description | Example |
+|--------|-------------|---------|
+| 400 | Invalid request (missing or empty `problem` field) | `{"detail": "'problem' must be a non-empty string"}` |
+| 422 | Validation error (malformed JSON) | `{"detail": [...]}` |
+| 503 | Service unavailable (LLM environment not configured) | `{"detail": "Solve unavailable: ..."}` |
+
+**cURL examples**:
+
+Basic request:
+```bash
+curl -X POST http://localhost:3000/solve \
+  -H "Content-Type: application/json" \
+  -d '{"problem":"Calculate the area of a circle with radius 5"}'
+```
+
+Using jq to format output:
+```bash
+curl -X POST http://localhost:3000/solve \
+  -H "Content-Type: application/json" \
+  -d '{"problem":"What is 2+2?"}' | jq .
+```
+
+Using PowerShell:
 ```powershell
+$body = @{"problem"="Calculate the area of a circle with radius 5"} | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/solve `
+  -ContentType 'application/json' -Body $body
+```
+
+---
+
+## Local Setup
+
+### 1. Environment
+
+Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# or
+venv\Scripts\Activate.ps1  # Windows PowerShell
+```
+
+### 2. Dependencies
+
+Install requirements:
+```bash
 pip install -r requirements.txt
 ```
 
-3. Create a local environment file from [.env.example](.env.example) or set the required environment variables directly.
+### 3. Environment Variables
 
-Minimum for an OpenAI-backed deployment:
-
-```powershell
-$env:OPENAI_API_KEY="your_api_key"
-$env:OPENAI_MODEL="gpt-4o-mini"
+Set required OpenAI configuration:
+```bash
+export OPENAI_API_KEY="your_api_key_here"
+export OPENAI_MODEL="gpt-4o-mini"
 ```
 
-4. Start the API with either command:
-
+Or on Windows PowerShell:
 ```powershell
+$env:OPENAI_API_KEY = "your_api_key_here"
+$env:OPENAI_MODEL = "gpt-4o-mini"
+```
+
+### 4. Start the Server
+
+Run with Uvicorn directly:
+```bash
+python -m uvicorn app:app --host 0.0.0.0 --port 3000
+```
+
+Or with the custom app launcher:
+```bash
 python app.py
 ```
 
-Or:
+The server starts on `http://localhost:3000` by default, or the first available port if 3000 is in use.
 
-```powershell
-flask run
+### 5. Test the API
+
+Request the solve endpoint:
+```bash
+curl -X POST http://localhost:3000/solve \
+  -H "Content-Type: application/json" \
+  -d '{"problem":"Explain quantum computing in simple terms"}'
 ```
 
-5. Test the API:
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:10000/solve -ContentType 'application/json' -Body '{"problem":"Calculate the area of a circle with radius 5"}'
+Access API documentation (auto-generated):
+```
+http://localhost:3000/docs          # Swagger UI
+http://localhost:3000/redoc         # ReDoc
 ```
 
-Open the browser UI:
-
-```text
-http://localhost:10000/ui
-```
+---
 
 ## Docker
 
-Build the image:
-
-```powershell
+Build the Docker image:
+```bash
 docker build -t multi-agent-research .
 ```
 
 Run the container:
-
-```powershell
-docker run --rm -p 10000:10000 -e OPENAI_API_KEY=your_api_key -e OPENAI_MODEL=gpt-4o-mini multi-agent-research
+```bash
+docker run -e OPENAI_API_KEY="your_key" \
+           -e OPENAI_MODEL="gpt-4o-mini" \
+           -p 3000:10000 \
+           multi-agent-research
 ```
 
-## Render deployment
+The container runs on port 10000 internally (mapped to 3000 above).
+
+---
+
+## Multi-Agent System
+
+The system uses four specialized agents that collaborate:
+
+1. **Strategic Planner**: Creates a concise step-by-step plan to solve the problem
+2. **Tool Executor**: Computes a final answer with supporting steps
+3. **Quality Observer**: Validates correctness and identifies any issues
+4. **Reflective Analyst**: Provides reflections and improvement suggestions
+
+Each agent contributes unique expertise through the CrewAI framework, ensuring thorough problem analysis and high-quality solutions.
+
+---
+
+## Testing
+
+Run the test suite:
+```bash
+pytest test_app.py -v
+```
+
+Test coverage includes:
+- GET / (service metadata)
+- GET /health (health check)
+- GET /solve (method not allowed)
+- POST /solve (problem solving with valid/invalid inputs)
+
+---
+
+## Deployment
+
+### Render
 
 This repository includes [render.yaml](render.yaml), which defines a Docker-based web service.
 
-Required environment variables in Render:
+Required environment variables:
+- `OPENAI_API_KEY` - Your OpenAI API key
+- `OPENAI_MODEL` - Model to use (e.g., `gpt-4o-mini`)
 
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
+Deployment steps:
+1. Push to GitHub
+2. Create a new Render web service from this repository
+3. Confirm Dockerfile is selected
+4. Add the required environment variables
+5. Deploy and verify with `GET /health`
 
-Deploy flow:
+---
 
-1. Push the repository to GitHub.
-2. Create a new Blueprint or Web Service in Render.
-3. Point Render to this repository.
-4. Confirm it uses the included Dockerfile.
-5. Add the required secret environment variables.
-6. Deploy and verify `GET /health`.
+## Technical Stack
 
-## Notes
-
-- The API currently routes every request through `run_math_task` in [main.py](main.py).
-- Existing agent and task definitions remain unchanged.
-- Run history is persisted locally in `runs.json` and reloaded on startup.# multi_agent_research
-# multi_agent_research
+- **Framework**: FastAPI 0.116.1
+- **Server**: Uvicorn 0.35.0 (ASGI)
+- **Multi-Agent**: CrewAI 1.11.0
+- **LLM**: OpenAI API (configurable model)
+- **Validation**: Pydantic v2
+- **Testing**: pytest
+- **Container**: Docker with Python 3.12-slim
+- **Production**: Render (non-root execution)

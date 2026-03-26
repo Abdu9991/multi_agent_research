@@ -2,9 +2,7 @@ import os
 import socket
 
 import uvicorn
-from fastapi import FastAPI
-
-from main import run_task
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
@@ -35,7 +33,17 @@ def solve_help():
 
 @app.post("/solve")
 def solve(payload: dict):
-    return {"result": run_task(payload["problem"])}
+    problem = (payload or {}).get("problem")
+    if not isinstance(problem, str) or not problem.strip():
+        raise HTTPException(status_code=400, detail="'problem' must be a non-empty string")
+
+    try:
+        # Lazy import keeps / and /health alive even when LLM env is missing.
+        from main import run_task
+
+        return {"result": run_task(problem.strip())}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Solve unavailable: {exc}") from exc
 
 
 def _first_available_port(host: str, start_port: int, max_attempts: int = 20) -> int:

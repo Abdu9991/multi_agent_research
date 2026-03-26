@@ -4,8 +4,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-WORKDIR /app
-
 # System dependencies for native Python extensions
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -19,18 +17,17 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt \
-    && adduser --disabled-password --gecos "" appuser
-
-COPY . .
-
-RUN chown -R appuser:appuser /app
-
+# Create a system user 'appuser'
+RUN useradd -m appuser
 USER appuser
+WORKDIR /home/appuser
+
+# Ensure the PATH includes the local bin for the new user
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+COPY --chown=appuser:appuser . .
+RUN pip install --user --no-cache-dir -r requirements.txt
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --threads 2 --timeout ${GUNICORN_TIMEOUT:-180} app:app"]
+CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-10000} --workers ${WEB_CONCURRENCY:-1} --timeout ${GUNICORN_TIMEOUT:-180} app:app"]

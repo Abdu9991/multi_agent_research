@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import re
 import socket
@@ -29,7 +30,7 @@ app = FastAPI(
 )
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-SOLVE_TIMEOUT_SECONDS = int(os.getenv("SOLVE_TIMEOUT_SECONDS", "90"))
+SOLVE_TIMEOUT_SECONDS = int(os.getenv("SOLVE_TIMEOUT_SECONDS", "300"))
 
 
 # ---------------------------------------------------------------------------
@@ -107,27 +108,75 @@ def _run_task_with_timeout(problem: str, timeout_seconds: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Math expression shortcut (bypasses LLM entirely for pure arithmetic)
+# Math expression shortcut (bypasses LLM for arithmetic and geometry phrases)
 # ---------------------------------------------------------------------------
 
-# Matches expressions made only of digits, operators, parens, and known math fns.
+# Matches pure arithmetic / math function expressions
 _MATH_EXPR_RE = re.compile(
     r'^[\d\s+\-*/().%^,]+$'
     r'|^(sqrt|sin|cos|tan|log|abs|round)\s*\(',
     re.IGNORECASE,
 )
 
+# Natural-language geometry patterns -> formula lambda
+_NL_MATH_PATTERNS: list = [
+    # area of a circle with radius N
+    (re.compile(r'area\s+of\s+(?:a\s+)?circle.*?radius\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: math.pi * float(m.group(1)) ** 2),
+    # area of a circle with diameter N
+    (re.compile(r'area\s+of\s+(?:a\s+)?circle.*?diameter\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: math.pi * (float(m.group(1)) / 2) ** 2),
+    # circumference/perimeter of circle radius N
+    (re.compile(r'(?:circumference|perimeter)\s+of\s+(?:a\s+)?circle.*?radius\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: 2 * math.pi * float(m.group(1))),
+    # area of a square side N
+    (re.compile(r'area\s+of\s+(?:a\s+)?square.*?(?:side|length)\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: float(m.group(1)) ** 2),
+    # area of a rectangle W by H
+    (re.compile(r'area\s+of\s+(?:a\s+)?rectangle.*?([\d.]+)\s*(?:by|x|\*|,)\s*([\d.]+)', re.I),
+     lambda m: float(m.group(1)) * float(m.group(2))),
+    # area of a triangle base N height N
+    (re.compile(r'area\s+of\s+(?:a\s+)?triangle.*?base\s*[=:]?\s*([\d.]+).*?height\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: 0.5 * float(m.group(1)) * float(m.group(2))),
+    # volume of a sphere radius N
+    (re.compile(r'volume\s+of\s+(?:a\s+)?sphere.*?radius\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: (4 / 3) * math.pi * float(m.group(1)) ** 3),
+    # volume of a cube side N
+    (re.compile(r'volume\s+of\s+(?:a\s+)?cube.*?(?:side|edge|length)\s*[=:]?\s*([\d.]+)', re.I),
+     lambda m: float(m.group(1)) ** 3),
+    # hypotenuse a N b N
+    (re.compile(r'hypotenuse.*?([\d.]+).*?([\d.]+)', re.I),
+     lambda m: math.sqrt(float(m.group(1)) ** 2 + float(m.group(2)) ** 2)),
+]
+
+
+def _fmt(value: float) -> str:
+    if value == int(value):
+        return str(int(value))
+    return f"{value:.6f}".rstrip('0').rstrip('.')
+
 
 def _try_calculator(problem: str) -> Optional[str]:
-    """Return an instant calculator result for pure arithmetic, or None to fall
-    through to the full CrewAI workflow."""
+    """Return an instant result for pure arithmetic or common geometry phrases,
+    or None to fall through to the full CrewAI workflow."""
     expr = problem.strip()
-    if not _MATH_EXPR_RE.match(expr):
-        return None
-    result = CalculatorTool()._run(expr)
-    if result.startswith("Error:"):
-        return None  # malformed expression — let LLM handle it
-    return result
+
+    # 1. Pure arithmetic / math function
+    if _MATH_EXPR_RE.match(expr):
+        result = CalculatorTool()._run(expr)
+        if not result.startswith("Error:"):
+            return result
+
+    # 2. Natural-language geometry / formula phrases
+    for pattern, formula in _NL_MATH_PATTERNS:
+        m = pattern.search(expr)
+        if m:
+            try:
+                return _fmt(formula(m))
+            except Exception:
+                continue  # bad numbers — fall through to LLM
+
+    return None
 
 
 def _looks_like_failure_result(result_text: str) -> bool:

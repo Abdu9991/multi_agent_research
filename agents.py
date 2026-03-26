@@ -2,6 +2,7 @@
 import os
 import urllib.request
 
+import litellm
 from dotenv import load_dotenv
 from crewai import Agent, LLM
 
@@ -57,10 +58,12 @@ def _ollama_reachable(base_url: str, timeout: float = 3.0) -> bool:
 
 # -------- LLM Selection (Ollama → OpenAI, fail-fast) --------
 llm = None
+_using_ollama = False  # True when Ollama is active (affects tool-calling support)
 
 if OLLAMA_BASE_URL and OLLAMA_MODEL:
     if _ollama_reachable(OLLAMA_BASE_URL):
         llm = Ollama(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, temperature=TEMPERATURE)
+        _using_ollama = True
         print(f"[LLM] Using Ollama: {OLLAMA_MODEL} @ {OLLAMA_BASE_URL}")
     else:
         print(f"[LLM] Ollama unreachable at {OLLAMA_BASE_URL} — falling back to OpenAI")
@@ -75,13 +78,23 @@ if llm is None:
             "or set OPENAI_API_KEY in your .env file."
         )
 
+# Most base Ollama models (llama2, mistral, etc.) don't support the OpenAI tools API.
+# When using Ollama, tell LiteLLM to drop unsupported params rather than crash, and
+# give agents empty tool lists so no tool-calling payload is ever sent to the model.
+if _using_ollama:
+    litellm.drop_params = True
+    print("[LLM] Ollama mode: tool calling disabled (llm2/mistral don't support tools API)")
+
+# Agents receive tools only when the LLM actually supports function calling.
+_tools_enabled = not _using_ollama
+
 # -------- Agents --------
 strategic_planner = Agent(
     role="Planner Agent",
     goal="Create step-by-step plans to solve problems",
     backstory="Expert planner",
     llm=llm,
-    tools=[reasoning_logger_tool],
+    tools=[reasoning_logger_tool] if _tools_enabled else [],
     verbose=True,
 )
 
@@ -89,7 +102,7 @@ tool_executor = Agent(
     role="Tool Agent",
     goal="Execute calculations, coding, and data analysis",
     backstory="Math and programming expert",
-    tools=[calculator_tool, python_executor_tool, data_analysis_tool],
+    tools=[calculator_tool, python_executor_tool, data_analysis_tool] if _tools_enabled else [],
     llm=llm,
     verbose=True,
 )
@@ -99,7 +112,7 @@ quality_observer = Agent(
     goal="Verify correctness of outputs",
     backstory="Quality assurance specialist",
     llm=llm,
-    tools=[calculator_tool],
+    tools=[calculator_tool] if _tools_enabled else [],
     verbose=True,
 )
 
@@ -108,7 +121,7 @@ reflective_analyst = Agent(
     goal="Analyze failures and improve future reasoning",
     backstory="Self-improvement analyst",
     llm=llm,
-    tools=[reasoning_logger_tool],
+    tools=[reasoning_logger_tool] if _tools_enabled else [],
     verbose=True,
 )
 

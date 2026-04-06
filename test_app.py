@@ -68,6 +68,23 @@ class TestHealthEndpoint:
         response = client.get("/health")
         assert response.status_code == 200
 
+
+class TestAuthPages:
+    """Tests for sign-in/sign-up page access rules."""
+
+    def test_app_redirects_to_landing_without_auth(self, client):
+        """Test that unauthenticated users cannot open the app page directly."""
+        response = client.get("/app", follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/"
+
+    def test_signup_page_prompts_signin_after_account_creation(self, client):
+        """Test that the sign-up page tells users to sign in before opening the app."""
+        response = client.get("/signup")
+        assert response.status_code == 200
+        assert "redirected to the sign-in page" in response.text.lower()
+        assert "sign in there to open the app" in response.text.lower()
+
     def test_health_response_structure(self, client):
         """Test that GET /health response has correct structure."""
         response = client.get("/health")

@@ -329,6 +329,8 @@
     const signinButton = document.getElementById("signin-button");
     const openAppLink = document.getElementById("open-app-link");
     const authStatus = document.getElementById("auth-status");
+    const urlParams = new URLSearchParams(window.location.search);
+    const signupJustCompleted = urlParams.get("signup") === "success";
 
     function setStatus(message, state = "info") {
       authStatus.textContent = message;
@@ -404,6 +406,10 @@
     });
 
     setAppAccessCookie(false);
+
+    if (signupJustCompleted) {
+      setStatus("Account created successfully. Please sign in with your new email and password.", "success");
+    }
 
     if (!firebaseEnabled) {
       signinButton.disabled = true;

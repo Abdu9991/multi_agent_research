@@ -326,14 +326,14 @@
 
       <div class="status-box" id="auth-status">{% if firebase_enabled %}Create your account to start using the Multi-Agent Research System.{% else %}Add your Firebase settings to `.env` to enable sign up.{% endif %}</div>
       <p class="switch-link">Already have an account? <a href="/signin">Sign in here</a>.</p>
-      <p class="meta">After successful sign-up, you will be redirected to the main app page automatically.</p>
+      <p class="meta">After successful sign-up, you will be redirected to the sign-in page. Sign in there to open the app.</p>
     </section>
   </main>
 
   <script id="firebase-config" type="application/json">{{ firebase_config_json | safe }}</script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     const firebaseEnabled = document.body.dataset.firebaseEnabled === "true";
     const firebaseConfig = JSON.parse(document.getElementById("firebase-config")?.textContent || "{}");
@@ -447,13 +447,10 @@
         const auth = getAuth(firebaseApp);
 
         onAuthStateChanged(auth, (user) => {
+          setAppAccessCookie(false);
           if (user) {
             const displayName = user.displayName || user.email || "User";
-            setAppAccessCookie(true, user.email || "signed-in-user", displayName);
-            setStatus(`Signed in as ${displayName}. Redirecting to the app...`, "success");
-            window.setTimeout(() => { window.location.href = "/app"; }, 500);
-          } else {
-            setAppAccessCookie(false);
+            setStatus(`Account detected for ${displayName}. Please sign in from the sign-in page to open the app.`, "warning");
           }
         });
 
@@ -466,10 +463,18 @@
             signupButton.disabled = true;
             const result = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
             await updateProfile(result.user, { displayName: credentials.displayName });
-            setAppAccessCookie(true, result.user.email || credentials.email, credentials.displayName);
-            setStatus(`Account created for ${credentials.displayName}. Opening app...`, "success");
-            window.location.href = "/app";
+            try {
+              await signOut(auth);
+            } catch (signOutError) {
+              console.warn("Sign-out after sign-up failed:", signOutError);
+            }
+            setAppAccessCookie(false);
+            setStatus(`Account created for ${credentials.displayName}. Please sign in to open the app. Redirecting to sign in...`, "success");
+            window.setTimeout(() => {
+              window.location.href = "/signin?signup=success";
+            }, 700);
           } catch (error) {
+            setAppAccessCookie(false);
             setStatus(toFriendlyAuthMessage(error, "Sign up failed."), "error");
             console.error(error);
           } finally {

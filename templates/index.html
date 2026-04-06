@@ -3,190 +3,590 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Multi-Agent Research</title>
+  <title>Autonomous Multi-Agent Problem Solving System</title>
   <style>
     :root {
-      --bg: #f5efe4;
-      --paper: rgba(255, 252, 245, 0.88);
-      --ink: #1d1a16;
-      --muted: #6c6258;
-      --accent: #0f766e;
-      --accent-2: #c2410c;
-      --line: rgba(29, 26, 22, 0.12);
-      --shadow: 0 24px 80px rgba(29, 26, 22, 0.12);
+      --bg-1: #081122;
+      --bg-2: #13294b;
+      --bg-3: #0f766e;
+      --card: rgba(255, 255, 255, 0.88);
+      --card-strong: rgba(255, 255, 255, 0.96);
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, 0.22);
+      --primary: #3b82f6;
+      --primary-2: #7c3aed;
+      --accent: #14b8a6;
+      --success: #22c55e;
+      --shadow: 0 22px 50px rgba(15, 23, 42, 0.22);
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      block-size: 100%;
+      overflow: hidden;
+    }
+
     body {
       margin: 0;
-      min-block-size: 100vh;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      transition: opacity 140ms ease;
+      -moz-osx-font-smoothing: grayscale;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(194, 65, 12, 0.18), transparent 24%),
-        linear-gradient(135deg, #f5efe4 0%, #f0e7d7 45%, #efe3ce 100%);
-      display: grid;
-      place-items: center;
-      padding: 24px;
+        radial-gradient(circle at 12% 16%, rgba(59, 130, 246, 0.34), transparent 0, transparent 24%),
+        radial-gradient(circle at 86% 14%, rgba(124, 58, 237, 0.28), transparent 0, transparent 22%),
+        radial-gradient(circle at 78% 82%, rgba(20, 184, 166, 0.24), transparent 0, transparent 24%),
+        radial-gradient(circle at 18% 84%, rgba(244, 114, 182, 0.18), transparent 0, transparent 18%),
+        linear-gradient(135deg, #081122 0%, #13294b 34%, #1d4ed8 68%, #0f766e 100%);
+      padding: 14px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 35%, rgba(255, 255, 255, 0.03) 100%);
     }
 
     .shell {
-      inline-size: min(980px, 100%);
+      position: relative;
+      z-index: 1;
+      inline-size: min(1320px, 100%);
+      block-size: calc(100vh - 24px);
+      margin-inline: auto;
       display: grid;
-      gap: 24px;
-      grid-template-columns: 1.1fr 0.9fr;
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 28px;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 14px;
+      align-items: stretch;
+      animation: rise 320ms ease-out;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 24px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      -webkit-backdrop-filter: blur(18px);
-      backdrop-filter: blur(18px);
-      animation: rise 500ms ease-out;
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    body.auth-pending .shell {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .hero,
     .panel {
-      padding: 32px;
+      block-size: 100%;
+      min-block-size: 0;
+      overflow: auto;
     }
 
     .hero {
       position: relative;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.08)),
-        repeating-linear-gradient(
-          -24deg,
-          rgba(15, 118, 110, 0.06),
-          rgba(15, 118, 110, 0.06) 12px,
-          rgba(255, 255, 255, 0.02) 12px,
-          rgba(255, 255, 255, 0.02) 24px
-        );
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(145deg, rgba(8, 17, 34, 0.96), rgba(29, 78, 216, 0.9) 58%, rgba(15, 118, 110, 0.88) 100%);
+      color: #ffffff;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      inline-size: 180px;
+      block-size: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 70%);
+      pointer-events: none;
     }
 
     .eyebrow {
-      display: inline-block;
-      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
       border-radius: 999px;
-      font-size: 12px;
-      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      background: rgba(15, 118, 110, 0.1);
-      color: var(--accent);
-      border: 1px solid rgba(15, 118, 110, 0.18);
+      color: #dbeafe;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(191, 219, 254, 0.22);
+      align-self: flex-start;
     }
 
     h1 {
-      margin: 18px 0 14px;
-      font-size: clamp(2.4rem, 4vw, 4.5rem);
-      line-height: 0.95;
-      font-weight: 700;
+      margin: 0;
+      font-size: clamp(1.5rem, 2.2vw, 2.15rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      white-space: normal;
+      max-inline-size: 16ch;
     }
 
     .lead {
       margin: 0;
-      max-inline-size: 34rem;
-      font-size: 1.05rem;
-      line-height: 1.7;
-      color: var(--muted);
+      color: rgba(219, 234, 254, 0.92);
+      font-size: 0.92rem;
+      line-height: 1.6;
+      max-inline-size: 42rem;
     }
 
-    .meta {
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.1);
+      color: #f8fbff;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    .hero-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-block-start: 28px;
+      gap: 8px;
     }
 
-    .meta-card {
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.52);
-      border: 1px solid var(--line);
+    .info-card {
+      padding: 10px 11px;
+      border-radius: 16px;
+      border: 1px solid rgba(191, 219, 254, 0.18);
+      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
     }
 
-    .meta-card strong {
+    .info-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 24px rgba(8, 17, 34, 0.18);
+    }
+
+    .info-card strong {
       display: block;
-      margin-block-end: 6px;
-      font-size: 0.95rem;
+      margin-block-end: 3px;
+      font-size: 0.84rem;
+      color: #ffffff;
     }
 
-    .meta-card span {
+    .info-card span {
+      color: rgba(219, 234, 254, 0.9);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+
+    .left-chart {
+      padding: 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(191, 219, 254, 0.16);
+      background: linear-gradient(135deg, rgba(7, 16, 34, 0.74) 0%, rgba(29, 78, 216, 0.52) 100%);
+      min-block-size: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1 1 auto;
+      overflow: auto;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .left-chart .history-head h3,
+    .left-chart .section-copy,
+    .left-chart .metric-label,
+    .left-chart .metric-detail {
+      color: #dbeafe;
+    }
+
+    .left-chart .history-head h3 {
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .left-chart .section-copy {
+      font-size: 0.86rem;
+    }
+
+    .left-chart .metric-card {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(191, 219, 254, 0.16);
+    }
+
+    .left-chart .metric-value {
+      color: #ffffff;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-block-start: 10px;
+    }
+
+    .metric-card {
+      padding: 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(191, 219, 254, 0.18);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .metric-label {
+      display: block;
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.74rem;
+      margin-block-end: 4px;
+    }
+
+    .metric-value {
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: var(--primary-2);
+    }
+
+    .metric-detail {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-block-start: 3px;
+    }
+
+    .chart-shell {
+      margin-block-start: 8px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(191, 219, 254, 0.16);
+      background: rgba(9, 18, 33, 0.18);
+      flex: 1 1 auto;
+      min-block-size: 0;
+      min-height: 220px;
+    }
+
+    .chart-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-block-end: 10px;
+    }
+
+    .chart-kicker {
+      margin: 0;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(191, 219, 254, 0.92);
+    }
+
+    .chart-title {
+      margin: 2px 0 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .chart-badge {
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(167, 243, 208, 0.24);
+      background: rgba(16, 185, 129, 0.16);
+      color: #d1fae5;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .trend {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 10px;
+      min-block-size: 130px;
+      align-items: end;
+    }
+
+    .trend-col {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+    }
+
+    .trend-value,
+    .trend-label {
+      font-size: 0.76rem;
+      color: rgba(219, 234, 254, 0.96);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .trend-track {
+      inline-size: 100%;
+      block-size: 94px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid rgba(191, 219, 254, 0.16);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    }
+
+    .trend-bar {
+      inline-size: 100%;
+      border-radius: 10px 10px 6px 6px;
+      background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 45%, #2563eb 100%);
+      box-shadow: 0 12px 18px rgba(37, 99, 235, 0.3);
+      min-block-size: 14px;
+    }
+
+    .trend-bar.is-peak {
+      background: linear-gradient(180deg, #34d399 0%, #22c55e 100%);
+      box-shadow: 0 10px 16px rgba(34, 197, 94, 0.28);
+    }
+
+    .trend-empty {
+      display: grid;
+      place-items: center;
+      min-block-size: 92px;
+      border: 1px dashed rgba(191, 219, 254, 0.28);
+      border-radius: 12px;
+      color: rgba(219, 234, 254, 0.84);
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .trend-caption {
+      margin: 10px 0 0;
+      color: rgba(219, 234, 254, 0.96);
+      font-size: 0.84rem;
       line-height: 1.5;
     }
 
-    .panel {
+    .example-pills {
       display: grid;
-      gap: 18px;
-      align-content: start;
-      background: rgba(255, 255, 255, 0.52);
-      border-inline-start: 1px solid var(--line);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .prompt-examples {
+      margin-block: 8px 10px;
+    }
+
+    .pill {
+      border: 1px solid rgba(37, 99, 235, 0.14);
+      background: rgba(37, 99, 235, 0.07);
+      color: var(--primary-2);
+      border-radius: 14px;
+      padding: 9px 10px;
+      font-size: 0.8rem;
+      text-align: start;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+    }
+
+    .pill:hover {
+      transform: translateY(-1px);
+      background: rgba(37, 99, 235, 0.12);
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.1);
+    }
+
+    .panel {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-block-size: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(241,245,255,0.88));
+    }
+
+    .panel-section,
+    .history {
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,255,0.84));
+      min-block-size: 0;
+      flex: 0 0 auto;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-block: 8px;
+    }
+
+    .auth-input {
+      inline-size: 100%;
+      min-inline-size: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: #fff;
+      font: inherit;
+      color: var(--ink);
+      font-size: 0.82rem;
+    }
+
+    .auth-input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.14);
+      border-color: rgba(37, 99, 235, 0.34);
+    }
+
+    .auth-actions {
+      margin-block-start: 6px;
+    }
+
+    .auth-status {
+      margin-block-start: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .auth-status[data-state="success"] {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .auth-status[data-state="error"] {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+
+    .auth-status[data-state="warning"] {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
+
+    .auth-actions button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .section-title {
+      margin: 0 0 6px;
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
+
+    .section-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
     }
 
     .status {
       display: inline-flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(219, 234, 254, 0.72), rgba(236, 254, 255, 0.9));
+      border: 1px solid rgba(59, 130, 246, 0.14);
+      font-size: 0.84rem;
+      flex-wrap: wrap;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .status-main,
+    .workspace-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(29, 26, 22, 0.04);
-      border: 1px solid var(--line);
-      font-size: 0.92rem;
+      background: #e8f0ff;
+      color: #1d4ed8;
+      font-size: 0.76rem;
+      font-weight: 700;
     }
 
     .dot {
-      inline-size: 10px;
-      block-size: 10px;
+      inline-size: 9px;
+      block-size: 9px;
       border-radius: 50%;
-      background: {% if llm_configured %}#15803d{% else %}#b45309{% endif %};
-      box-shadow: 0 0 0 6px rgba(21, 128, 61, 0.08);
+      background: {% if llm_configured %}#16a34a{% else %}#d97706{% endif %};
+      box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.1);
     }
 
     label {
       display: block;
-      margin-block-end: 8px;
+      margin-block-end: 6px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
     }
 
     textarea {
       inline-size: 100%;
-      min-block-size: 180px;
+      min-block-size: 82px;
+      max-block-size: 82px;
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 18px;
-      resize: vertical;
+      border-radius: 14px;
+      padding: 10px 12px;
+      resize: none;
       font: inherit;
-      font-size: 1rem;
-      line-height: 1.6;
+      font-size: 0.9rem;
+      line-height: 1.45;
       color: var(--ink);
-      background: rgba(255, 255, 255, 0.92);
+      background: var(--card-strong);
     }
 
-    textarea:focus {
-      outline: 2px solid rgba(15, 118, 110, 0.22);
-      border-color: rgba(15, 118, 110, 0.35);
+    textarea:focus,
+    .history-controls input:focus,
+    .history-controls select:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.14);
+      border-color: rgba(37, 99, 235, 0.34);
     }
 
     .actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-block-start: 10px;
     }
 
     button {
       border: 0;
       border-radius: 999px;
-      padding: 14px 22px;
+      padding: 10px 14px;
       font: inherit;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+      transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
     }
 
     button:hover {
@@ -195,43 +595,75 @@
 
     .primary {
       color: #fff;
-      background: linear-gradient(135deg, var(--accent), #115e59);
-      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.24);
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.22);
     }
 
     .secondary {
       color: var(--ink);
-      background: rgba(29, 26, 22, 0.06);
+      background: rgba(20, 33, 61, 0.05);
       border: 1px solid var(--line);
     }
 
     .output {
-      min-block-size: 220px;
-      padding: 18px;
-      border-radius: 20px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.78);
+      min-block-size: 94px;
+      max-block-size: 120px;
+      overflow: auto;
+      padding: 12px 13px;
+      border-radius: 16px;
+      border: 1px solid rgba(147, 197, 253, 0.34);
+      background: linear-gradient(180deg, #f8fbff, #eef6ff);
       white-space: pre-wrap;
-      line-height: 1.7;
+      line-height: 1.55;
       color: var(--ink);
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
+      font-size: 0.88rem;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
     }
 
     .history {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.78);
-      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1 1 220px;
+      min-block-size: 220px;
+      overflow: hidden;
     }
 
-    .history h3 {
-      margin: 0 0 10px;
-      font-size: 1rem;
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-block-end: 0;
+    }
+
+    .history-head h3 {
+      margin: 0;
+      font-size: 0.94rem;
+    }
+
+    .history-controls {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .history-controls input,
+    .history-controls select {
+      min-inline-size: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 7px 9px;
+      background: #fff;
+      font: inherit;
+      color: var(--ink);
+      font-size: 0.78rem;
+    }
+
+    .history-controls button {
+      padding: 7px 10px;
+      font-size: 0.78rem;
     }
 
     .history-list {
@@ -239,73 +671,84 @@
       padding: 0;
       list-style: none;
       display: grid;
-      gap: 8px;
-      max-block-size: 190px;
+      gap: 6px;
       overflow: auto;
+      min-block-size: 140px;
+      flex: 1 1 auto;
     }
 
     .history-item {
       padding: 10px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(29, 26, 22, 0.03);
-      font-size: 0.9rem;
+      border-radius: 14px;
+      border: 1px solid #e2ebf5;
+      background: linear-gradient(180deg, #f8fbff, #f1f7ff);
+      font-size: 0.82rem;
       line-height: 1.45;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.06);
     }
 
-    .history-controls {
-      display: flex;
-      gap: 8px;
-      margin-block-end: 10px;
-      flex-wrap: wrap;
+    .history-item.status-blocked {
+      border-color: #f59e0b;
+      background: #fff7e8;
     }
 
-    .history-controls input,
-    .history-controls select {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 8px 10px;
-      background: #fff;
-      font: inherit;
-      color: var(--ink);
-      font-size: 0.85rem;
+    .history-item.status-invalid_request {
+      border-color: #ef4444;
+      background: #fff1f2;
     }
 
-    .history-controls button {
-      padding: 8px 12px;
-      font-size: 0.85rem;
+    .history-item.status-failed {
+      border-color: #f97316;
+      background: #fff7ed;
     }
 
-    .trend {
-      display: grid;
-      grid-template-columns: repeat(8, minmax(0, 1fr));
+    .history-status {
+      display: inline-flex;
+      align-items: center;
       gap: 6px;
-      block-size: 64px;
-      align-items: end;
-      margin-block-end: 10px;
+      margin-block-end: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #e8f0ff;
+      color: #1d4ed8;
     }
 
-    .trend-bar {
-      border-radius: 8px 8px 4px 4px;
-      background: linear-gradient(180deg, rgba(15, 118, 110, 0.28), rgba(15, 118, 110, 0.86));
-      min-block-size: 4px;
+    .history-item.status-blocked .history-status {
+      background: #fef3c7;
+      color: #92400e;
     }
 
-    .trend-empty {
-      color: var(--muted);
-      font-size: 0.85rem;
-      margin-block-end: 10px;
+    .history-item.status-invalid_request .history-status {
+      background: #ffe4e6;
+      color: #be123c;
+    }
+
+    .history-item.status-failed .history-status {
+      background: #ffedd5;
+      color: #c2410c;
     }
 
     .history-meta {
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.76rem;
+      margin: 3px 0;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
     }
 
     @keyframes rise {
       from {
         opacity: 0;
-        transform: translateY(18px);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
@@ -313,61 +756,147 @@
       }
     }
 
-    @media (max-inline-size: 860px) {
+    @media (max-inline-size: 980px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
       .shell {
+        block-size: auto;
         grid-template-columns: 1fr;
       }
 
+      .hero,
       .panel {
-        border-inline-start: 0;
-        border-block-start: 1px solid var(--line);
+        block-size: auto;
+      }
+
+      .hero-grid,
+      .example-pills,
+      .metrics-grid,
+      .auth-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .history-controls {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-<body>
+<body class="auth-pending" data-firebase-enabled="{{ 'true' if firebase_enabled else 'false' }}">
   <main class="shell">
-    <section class="hero">
-      <span class="eyebrow">CrewAI Browser Console</span>
-      <h1>Ask the multi-agent workflow to solve a task.</h1>
+    <section class="hero card">
+      <span class="eyebrow">✨ Multi-Agent Research Cockpit</span>
+      <h1>Research-Ready AI Workspace</h1>
       <p class="lead">
-        This page sends your prompt to the Flask API, which delegates planning, execution, and validation through the CrewAI flow already wired into the project.
+        A polished demo environment for math, planning, analytics, and proposal-driven reasoning with a modern look that feels engaging from the first screen.
       </p>
 
-      <div class="meta">
-        <div class="meta-card">
-          <strong>Flow</strong>
-          <span>Strategic Planner, Tool Executor, and Quality Observer run in sequence.</span>
+      <div class="hero-badges">
+        <span class="hero-badge">Research-ready</span>
+        <span class="hero-badge">Live evaluation metrics</span>
+        <span class="hero-badge">Fast, guided workflows</span>
+      </div>
+
+      <div class="hero-grid">
+        <div class="info-card">
+          <strong>Why it stands out</strong>
+          <span>Beautiful colors, a focused layout, and instant answers make the app feel professional and presentation-ready.</span>
         </div>
-        <div class="meta-card">
-          <strong>Route</strong>
-          <span>The UI submits directly to <code>/solve</code> and renders the API response.</span>
+        <div class="info-card">
+          <strong>How it works</strong>
+          <span>Plan → Act → Evaluate → Reflect using connected tools for calculations, Python execution, and structured analysis.</span>
         </div>
       </div>
+
+      <section class="left-chart">
+        <div class="history-head">
+          <h3>Evaluation overview</h3>
+          <span class="section-copy">Live research metrics and a redesigned runtime chart</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Task success rate</span>
+            <strong class="metric-value" id="metric-success">{{ evaluation_metrics.task_success_rate }}</strong>
+            <span class="metric-detail" id="metric-success-detail">Completed runs</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Reasoning consistency</span>
+            <strong class="metric-value" id="metric-consistency">{{ evaluation_metrics.reasoning_consistency }}</strong>
+            <span class="metric-detail">Structured output coverage</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Error recovery</span>
+            <strong class="metric-value" id="metric-recovery">{{ evaluation_metrics.error_recovery }}</strong>
+            <span class="metric-detail">Recovery after failed attempts</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Efficiency</span>
+            <strong class="metric-value" id="metric-efficiency">{{ evaluation_metrics.efficiency }}</strong>
+            <span class="metric-detail">Average completion speed</span>
+          </div>
+        </div>
+        <section class="chart-shell" aria-label="Runtime trend chart">
+          <div class="chart-top">
+            <div>
+              <p class="chart-kicker">Performance chart</p>
+              <p class="chart-title">Recent solve durations</p>
+            </div>
+            <span class="chart-badge">Live</span>
+          </div>
+          <div id="trend" class="trend-empty">Run a few tasks to visualize performance here.</div>
+          <p class="trend-caption" id="trend-caption">Waiting for recent solve data.</p>
+        </section>
+      </section>
     </section>
 
-    <section class="panel">
+    <section class="panel card">
       <div class="status">
-        <span class="dot"></span>
-        {% if llm_configured %}LLM credentials detected{% else %}LLM credentials missing{% endif %}
-      </div>
-
-      <form id="solve-form">
-        <label for="problem">Problem</label>
-        <textarea id="problem" name="problem">Calculate the area of a circle with radius 5</textarea>
-        <div class="actions">
-          <button class="primary" type="submit">Run Workflow</button>
-          <button class="secondary" type="button" id="clear-button">Clear</button>
+        <div class="status-main">
+          <span class="dot"></span>
+          <span>{% if llm_configured %}Your premium multi-agent workspace is ready for research and evaluation{% else %}Your workspace is ready in calculator mode until OpenAI or Ollama is configured{% endif %}</span>
         </div>
-      </form>
-
-      <div>
-        <label for="output">Response</label>
-        <div class="output" id="output">Waiting for input.</div>
+        <div class="workspace-actions">
+          <span class="user-chip" id="session-user">Checking sign-in…</span>
+          <button class="secondary" type="button" id="dashboard-signout">Sign out</button>
+        </div>
       </div>
+
+      <section class="panel-section">
+        <p class="section-title">Launch a task</p>
+        <p class="section-copy">Enter your request below and get a cleaner, more presentation-friendly answer instantly.</p>
+
+        <div class="prompt-examples">
+          <div class="example-pills">
+            <button class="pill" type="button" data-example="Create a simple monthly student budget with income 1200, rent 500, food 250, transport 100, and savings goal 150">📊 Budget planning</button>
+            <button class="pill" type="button" data-example="Analyze the numbers 12, 15, 19, 20, 22 and summarize the mean, median, and spread using Python">🐍 Python data analysis</button>
+            <button class="pill" type="button" data-example="Calculate the area of a circle with radius 5">📐 Mathematical calculation</button>
+            <button class="pill" type="button" data-example="A project has 3 phases with 2, 4, and 3 days. Propose the most efficient execution order and explain why">🧠 Multi-step reasoning</button>
+          </div>
+        </div>
+
+        <form id="solve-form">
+          <label for="problem">Your task prompt</label>
+          <textarea id="problem" name="problem" placeholder="Example: Create a basic budget for a student living on $1200 per month">Calculate the area of a circle with radius 5</textarea>
+          <div class="actions">
+            <button class="primary" type="submit">Solve now</button>
+            <button class="secondary" type="button" id="clear-button">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel-section">
+        <p class="section-title">AI response</p>
+        <div class="output" id="output">Your answer will appear here.</div>
+      </section>
 
       <section class="history">
-        <h3>Recent Runs</h3>
+        <div class="history-head">
+          <h3>Recent research activity</h3>
+          <span class="section-copy">Pinned for quick review and demo visibility</span>
+        </div>
         <div class="history-controls">
           <select id="status-filter" title="Filter runs by status" aria-label="Filter runs by status">
             <option value="">All statuses</option>
@@ -376,16 +905,15 @@
             <option value="blocked">Blocked</option>
             <option value="invalid_request">Invalid request</option>
           </select>
-          <input id="query-filter" type="text" placeholder="Search text" title="Search run history" aria-label="Search run history">
+          <input id="query-filter" type="text" placeholder="Search history" title="Search run history" aria-label="Search run history">
           <button class="secondary" type="button" id="apply-filters">Apply</button>
         </div>
-        <div id="trend" class="trend-empty">No duration trend yet.</div>
         <ul class="history-list" id="history-list">
           <li class="history-item">No runs yet.</li>
         </ul>
       </section>
 
-      <p class="hint">If credentials are not configured, the API will return a deployment-safe error instead of crashing.</p>
+      <p class="hint">Tip: This upgraded layout is designed to look attractive in demos, coursework presentations, and user-facing research showcases.</p>
     </section>
   </main>
 
@@ -396,12 +924,22 @@
     const clearButton = document.getElementById("clear-button");
     const historyList = document.getElementById("history-list");
     const trend = document.getElementById("trend");
+    const trendCaption = document.getElementById("trend-caption");
     const statusFilter = document.getElementById("status-filter");
     const queryFilter = document.getElementById("query-filter");
     const applyFiltersButton = document.getElementById("apply-filters");
+    const exampleButtons = document.querySelectorAll("[data-example]");
 
     function showOutput(value) {
       output.textContent = value;
+    }
+
+    function formatDurationText(durationMs) {
+      const value = Number(durationMs || 0);
+      if (!Number.isFinite(value) || value <= 0) {
+        return "instant";
+      }
+      return `${value} ms`;
     }
 
     function renderHistory(runs) {
@@ -412,11 +950,14 @@
 
       historyList.innerHTML = runs
         .map((run) => {
+          const rawStatus = run.status || "unknown";
+          const statusClass = String(rawStatus).replace(/\s+/g, "_");
           const title = run.problem ? run.problem : "Invalid request";
-          const subtitle = `${run.status} in ${run.duration_ms}ms`;
+          const subtitle = `${rawStatus} • ${formatDurationText(run.duration_ms)}`;
           const details = run.error || run.result_preview || "";
           return `
-            <li class="history-item">
+            <li class="history-item status-${statusClass}">
+              <div class="history-status">${rawStatus}</div>
               <div><strong>${title}</strong></div>
               <div class="history-meta">${subtitle}</div>
               <div>${details}</div>
@@ -426,28 +967,74 @@
         .join("");
     }
 
+    async function refreshMetrics() {
+      try {
+        const response = await fetch('/metrics');
+        const payload = await response.json();
+        document.getElementById('metric-success').textContent = payload.task_success_rate || '0.0%';
+        document.getElementById('metric-consistency').textContent = payload.reasoning_consistency || '0.0%';
+        document.getElementById('metric-recovery').textContent = payload.error_recovery || '0.0%';
+        document.getElementById('metric-efficiency').textContent = payload.efficiency || 'No completed runs yet';
+        document.getElementById('metric-success-detail').textContent = `${payload.completed_runs || 0} completed of ${payload.total_runs || 0} total runs`;
+      } catch {
+        document.getElementById('metric-success').textContent = 'Unavailable';
+        document.getElementById('metric-consistency').textContent = 'Unavailable';
+        document.getElementById('metric-recovery').textContent = 'Unavailable';
+        document.getElementById('metric-efficiency').textContent = 'Unavailable';
+      }
+    }
+
     function renderTrend(runs) {
-      const durations = (runs || [])
+      const recentRuns = (runs || []).slice(0, 8).reverse();
+      const durations = recentRuns
         .map((run) => Number(run.duration_ms || 0))
-        .filter((value) => Number.isFinite(value) && value > 0)
-        .slice(0, 8)
-        .reverse();
+        .filter((value) => Number.isFinite(value) && value >= 0);
 
       if (durations.length === 0) {
         trend.className = "trend-empty";
-        trend.textContent = "No duration trend yet.";
+        trend.textContent = "Run a few tasks to visualize performance here.";
+        trendCaption.textContent = "Waiting for recent solve data.";
         return;
       }
 
-      const maxDuration = Math.max(...durations);
+      const maxDuration = Math.max(...durations, 1);
+      const fastest = Math.min(...durations);
+      const slowest = Math.max(...durations);
+      const average = Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length);
+      const statusCounts = recentRuns.reduce((counts, run) => {
+        const key = run.status || 'unknown';
+        counts[key] = (counts[key] || 0) + 1;
+        return counts;
+      }, {});
+
       trend.className = "trend";
-      trend.innerHTML = durations
-        .map((duration) => {
-          const ratio = maxDuration > 0 ? duration / maxDuration : 0;
-          const height = Math.max(6, Math.round(ratio * 64));
-          return `<div class="trend-bar" style="block-size:${height}px" title="${duration}ms"></div>`;
+      trend.innerHTML = recentRuns
+        .map((run, index) => {
+          const duration = Number(run.duration_ms || 0);
+          const safeDuration = Number.isFinite(duration) && duration >= 0 ? duration : 0;
+          const ratio = maxDuration > 0 ? safeDuration / maxDuration : 0;
+          const height = Math.max(12, Math.round(ratio * 100));
+          const peakClass = safeDuration === slowest ? " is-peak" : "";
+          const status = run.status || 'unknown';
+          const shortStatus = status === 'invalid_request' ? 'invalid' : status;
+          return `
+            <div class="trend-col">
+              <span class="trend-value">${formatDurationText(safeDuration)}</span>
+              <div class="trend-track">
+                <div class="trend-bar${peakClass}" style="block-size:${height}px" title="Run ${index + 1}: ${status} • ${formatDurationText(safeDuration)}"></div>
+              </div>
+              <span class="trend-label">Run ${index + 1}</span>
+              <span class="trend-label">${shortStatus}</span>
+            </div>
+          `;
         })
         .join("");
+
+      const countSummary = Object.entries(statusCounts)
+        .map(([status, count]) => `${status.replace('_', ' ')}: ${count}`)
+        .join(' • ');
+
+      trendCaption.textContent = `Fastest: ${formatDurationText(fastest)} • Average: ${formatDurationText(average)} • Slowest: ${formatDurationText(slowest)} • ${countSummary}`;
     }
 
     async function refreshHistory() {
@@ -495,13 +1082,18 @@
         if (!response.ok) {
           showOutput(payload.detail || payload.error || "Request failed.");
           await refreshHistory();
+          await refreshMetrics();
           return;
         }
 
         const text = payload.result?.text || JSON.stringify(payload, null, 2);
-        const duration = Number.isFinite(payload.duration_ms) ? `\n\nDuration: ${payload.duration_ms}ms` : "";
+        const durationValue = Number(payload.duration_ms || 0);
+        const duration = Number.isFinite(durationValue)
+          ? `\n\nDuration: ${durationValue} ms`
+          : "";
         showOutput(`${text}${duration}`);
         await refreshHistory();
+        await refreshMetrics();
       } catch (error) {
         showOutput(error.message || "Unexpected client-side error.");
       }
@@ -509,8 +1101,16 @@
 
     clearButton.addEventListener("click", () => {
       problemInput.value = "";
-      showOutput("Waiting for input.");
+      showOutput("Your answer will appear here.");
       problemInput.focus();
+    });
+
+    exampleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        problemInput.value = button.dataset.example || "";
+        problemInput.focus();
+        showOutput("Example loaded. Press “Solve now” when you are ready.");
+      });
     });
 
     applyFiltersButton.addEventListener("click", () => {
@@ -518,6 +1118,91 @@
     });
 
     refreshHistory();
+    refreshMetrics();
+  </script>
+
+  <script id="firebase-config" type="application/json">{{ firebase_config_json | safe }}</script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth,
+      signOut,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseEnabled = document.body.dataset.firebaseEnabled === "true";
+    const firebaseConfig = JSON.parse(document.getElementById("firebase-config")?.textContent || "{}");
+    const sessionUser = document.getElementById("session-user");
+    const dashboardSignout = document.getElementById("dashboard-signout");
+
+    function getCookie(name) {
+      const prefix = `${name}=`;
+      const entry = document.cookie.split('; ').find((item) => item.startsWith(prefix));
+      return entry ? decodeURIComponent(entry.slice(prefix.length)) : "";
+    }
+
+    function setAppAccessCookie(enabled, options = {}) {
+      if (enabled) {
+        const mode = options.mode || "firebase";
+        const email = encodeURIComponent(options.email || "signed-in-user");
+        const displayName = encodeURIComponent(options.displayName || options.email || "User");
+        document.cookie = "app_access=1; Path=/; SameSite=Lax";
+        document.cookie = `auth_mode=${mode}; Path=/; SameSite=Lax`;
+        document.cookie = `session_user=${email}; Path=/; SameSite=Lax`;
+        document.cookie = `display_name=${displayName}; Path=/; SameSite=Lax`;
+      } else {
+        document.cookie = "app_access=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "auth_mode=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "session_user=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "display_name=; Path=/; Max-Age=0; SameSite=Lax";
+      }
+    }
+
+    const cachedDisplayName = getCookie("display_name");
+    if (cachedDisplayName) {
+      sessionUser.textContent = cachedDisplayName;
+    }
+
+    dashboardSignout.disabled = true;
+
+    if (!firebaseEnabled) {
+      setAppAccessCookie(false);
+      window.location.replace("/");
+    } else {
+      try {
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            const displayName = getCookie("display_name") || user.displayName || user.email || "Signed in";
+            setAppAccessCookie(true, { mode: "firebase", email: user.email || "signed-in-user", displayName });
+            sessionUser.textContent = displayName;
+            dashboardSignout.disabled = false;
+            document.body.classList.remove("auth-pending");
+          } else {
+            setAppAccessCookie(false);
+            window.location.replace("/");
+          }
+        });
+
+        dashboardSignout.addEventListener("click", async () => {
+          try {
+            await signOut(auth);
+          } finally {
+            setAppAccessCookie(false);
+            window.location.replace("/");
+          }
+        });
+      } catch (error) {
+        setAppAccessCookie(false);
+        sessionUser.textContent = "Auth unavailable";
+        dashboardSignout.disabled = true;
+        window.location.replace("/");
+        console.error(error);
+      }
+    }
   </script>
 </body>
 </html>

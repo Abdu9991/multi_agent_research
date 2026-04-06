@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | Autonomous Multi-Agent Problem Solving System</title>
+  <style>
+    :root {
+      --ink: #14213d;
+      --muted: #5d6b84;
+      --line: #dbe6f2;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --card: #ffffff;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-block-size: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.24), transparent 0, transparent 28%),
+        radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.2), transparent 0, transparent 26%),
+        linear-gradient(135deg, #eef4ff 0%, #f8fbff 55%, #edfdf6 100%);
+    }
+
+    .auth-shell {
+      inline-size: min(980px, 100%);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .intro {
+      padding: 28px;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.14);
+    }
+
+    h1 {
+      margin: 10px 0 8px;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      line-height: 1.1;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,255,0.86));
+    }
+
+    .feature-list strong {
+      display: block;
+      margin-block-end: 4px;
+      font-size: 0.92rem;
+    }
+
+    .feature-list span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .auth-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .auth-card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .auth-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    label {
+      display: block;
+      margin-block-end: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    input {
+      inline-size: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.14);
+      border-color: rgba(37, 99, 235, 0.34);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-block-start: 4px;
+    }
+
+    button, a.button-link {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover, a.button-link:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.22);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: rgba(20, 33, 61, 0.05);
+      border: 1px solid var(--line);
+    }
+
+    .button-link.is-disabled,
+    button:disabled {
+      opacity: 0.55;
+      pointer-events: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-block-start: -2px;
+    }
+
+    .toggle-row input {
+      inline-size: auto;
+      margin: 0;
+    }
+
+    .status-box {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      color: var(--muted);
+      font-size: 0.83rem;
+      line-height: 1.5;
+    }
+
+    .status-box[data-state="success"] {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .status-box[data-state="error"] {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+
+    .status-box[data-state="warning"] {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    @media (max-inline-size: 900px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      body { place-items: start center; }
+    }
+  </style>
+</head>
+<body data-firebase-enabled="{{ 'true' if firebase_enabled else 'false' }}">
+  <main class="auth-shell">
+    <section class="card intro">
+      <div>
+        <span class="eyebrow">🔐 Secure access</span>
+        <h1>Sign in before opening the app</h1>
+        <p class="lead">
+          Use Firebase email/password authentication to enter the autonomous multi-agent workspace.
+        </p>
+      </div>
+
+      <ul class="feature-list">
+        <li>
+          <strong>Protected entry</strong>
+          <span>Users reach the workspace after sign up or sign in from this page.</span>
+        </li>
+        <li>
+          <strong>Fast problem solving</strong>
+          <span>Run planning, budgeting, geometry, and Python analysis from one dashboard.</span>
+        </li>
+        <li>
+          <strong>Research-ready workflow</strong>
+          <span>Plan → Act → Observe → Reflect with live metrics and recent activity tracking.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="card auth-card">
+      <h2>Firebase sign up / sign in</h2>
+      <p class="auth-copy">Create a new account or sign in with your email and password to continue.</p>
+
+      <div>
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+
+      <div>
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required>
+      </div>
+
+      <div>
+        <label for="auth-confirm">Confirm password</label>
+        <input id="auth-confirm" type="password" placeholder="Repeat password for sign up" autocomplete="new-password">
+      </div>
+
+      <label class="toggle-row" for="show-password-toggle">
+        <input id="show-password-toggle" type="checkbox">
+        <span>Show password</span>
+      </label>
+
+      <div class="actions">
+        <button class="primary" type="button" id="signup-button">Sign up</button>
+        <button class="secondary" type="button" id="signin-button">Sign in</button>
+        <a class="button-link secondary is-disabled" href="/app" id="open-app-link" aria-disabled="true">Open app</a>
+      </div>
+
+      <div class="status-box" id="auth-status">{% if firebase_enabled %}Firebase config loaded. Enter your email and password to sign in. If sign-in fails, enable Email/Password in Firebase Console → Authentication → Sign-in method.{% else %}Add your Firebase settings to `.env` to enable login.{% endif %}</div>
+      <p class="meta">After successful login, you will be redirected to the main app page automatically.</p>
+    </section>
+  </main>
+
+  <script id="firebase-config" type="application/json">{{ firebase_config_json | safe }}</script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseEnabled = document.body.dataset.firebaseEnabled === "true";
+    const firebaseConfig = JSON.parse(document.getElementById("firebase-config")?.textContent || "{}");
+
+    const authEmail = document.getElementById("auth-email");
+    const authPassword = document.getElementById("auth-password");
+    const authConfirm = document.getElementById("auth-confirm");
+    const showPasswordToggle = document.getElementById("show-password-toggle");
+    const signupButton = document.getElementById("signup-button");
+    const signinButton = document.getElementById("signin-button");
+    const openAppLink = document.getElementById("open-app-link");
+    const authStatus = document.getElementById("auth-status");
+
+    function setStatus(message, state = "info") {
+      authStatus.textContent = message;
+      authStatus.dataset.state = state;
+    }
+
+    function setAppAccessCookie(enabled, options = {}) {
+      if (enabled) {
+        const email = encodeURIComponent(options.email || "local-user");
+        const mode = options.mode || "firebase";
+        document.cookie = "app_access=1; Path=/; SameSite=Lax";
+        document.cookie = `auth_mode=${mode}; Path=/; SameSite=Lax`;
+        document.cookie = `session_user=${email}; Path=/; SameSite=Lax`;
+        openAppLink.classList.remove("is-disabled");
+        openAppLink.setAttribute("aria-disabled", "false");
+      } else {
+        document.cookie = "app_access=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "auth_mode=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "session_user=; Path=/; Max-Age=0; SameSite=Lax";
+        openAppLink.classList.add("is-disabled");
+        openAppLink.setAttribute("aria-disabled", "true");
+      }
+    }
+
+    showPasswordToggle.addEventListener("change", () => {
+      const nextType = showPasswordToggle.checked ? "text" : "password";
+      authPassword.type = nextType;
+      authConfirm.type = nextType;
+    });
+
+    function toFriendlyAuthMessage(error, fallbackMessage) {
+      const code = String(error?.code || "");
+      const rawMessage = String(error?.message || "");
+
+      if (code.includes("configuration-not-found") || rawMessage.includes("CONFIGURATION_NOT_FOUND")) {
+        return "Firebase Authentication is not enabled for this project. In Firebase Console, open Authentication → Get started → Sign-in method and enable Email/Password.";
+      }
+
+      if (code.includes("operation-not-allowed")) {
+        return "Email/Password sign-in is disabled. Enable it in Firebase Console → Authentication → Sign-in method.";
+      }
+
+      if (code.includes("unauthorized-domain")) {
+        return "This local URL is not authorized in Firebase. Add localhost and 127.0.0.1 under Authentication → Settings → Authorized domains.";
+      }
+
+      if (code.includes("invalid-api-key")) {
+        return "The Firebase API key is invalid. Recheck the values in your `.env` file.";
+      }
+
+      if (code.includes("network-request-failed")) {
+        return "Network request failed while contacting Firebase. Check your internet connection and try again.";
+      }
+
+      return rawMessage || fallbackMessage;
+    }
+
+    function readCredentials(requireConfirm = false) {
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      const confirm = authConfirm.value;
+
+      if (!email && !password) {
+        setStatus("Please enter your email and password to continue.", "warning");
+        authEmail.focus();
+        return null;
+      }
+
+      if (!email) {
+        setStatus("Please enter your email address.", "warning");
+        authEmail.focus();
+        return null;
+      }
+
+      if (!password) {
+        setStatus("Please enter your password.", "warning");
+        authPassword.focus();
+        return null;
+      }
+
+      if (password.length < 6) {
+        setStatus("Password must be at least 6 characters.", "warning");
+        return null;
+      }
+
+      if (requireConfirm && password !== confirm) {
+        setStatus("Password confirmation does not match.", "warning");
+        return null;
+      }
+
+      return { email, password };
+    }
+
+    setAppAccessCookie(false);
+
+    if (!firebaseEnabled) {
+      signupButton.disabled = true;
+      signinButton.disabled = true;
+      setStatus("Firebase is not configured yet. Add FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, and FIREBASE_APP_ID to `.env`.", "warning");
+    } else {
+      try {
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            setAppAccessCookie(true, { mode: "firebase", email: user.email || "signed-in-user" });
+            setStatus(`Signed in as ${user.email}. Redirecting to the app...`, "success");
+            window.setTimeout(() => {
+              window.location.href = "/app";
+            }, 600);
+          } else {
+            setAppAccessCookie(false);
+          }
+        });
+
+        signupButton.addEventListener("click", async () => {
+          const credentials = readCredentials(true);
+          if (!credentials) return;
+
+          try {
+            const result = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+            setAppAccessCookie(true, { mode: "firebase", email: result.user.email || credentials.email });
+            setStatus(`Account created for ${result.user.email}. Opening app...`, "success");
+            window.location.href = "/app";
+          } catch (error) {
+            setStatus(toFriendlyAuthMessage(error, "Sign up failed."), "error");
+            console.error(error);
+          }
+        });
+
+        signinButton.addEventListener("click", async () => {
+          const credentials = readCredentials(false);
+          if (!credentials) return;
+
+          try {
+            const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+            setAppAccessCookie(true, { mode: "firebase", email: result.user.email || credentials.email });
+            setStatus(`Welcome back, ${result.user.email}. Opening app...`, "success");
+            window.location.href = "/app";
+          } catch (error) {
+            setStatus(toFriendlyAuthMessage(error, "Sign in failed."), "error");
+            console.error(error);
+          }
+        });
+      } catch (error) {
+        setAppAccessCookie(false);
+        signupButton.disabled = true;
+        signinButton.disabled = true;
+        openAppLink.href = "/";
+        setStatus(error.message || "Firebase failed to initialize.", "error");
+      }
+    }
+  </script>
+</body>
+</html>

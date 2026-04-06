@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | Autonomous Multi-Agent Problem Solving System</title>
+  <style>
+    :root {
+      --ink: #14213d;
+      --muted: #5d6b84;
+      --line: rgba(255, 255, 255, 0.35);
+      --primary: #2563eb;
+      --primary-2: #7c3aed;
+      --accent: #14b8a6;
+      --card: rgba(255, 255, 255, 0.88);
+      --shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-block-size: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.34), transparent 0, transparent 26%),
+        radial-gradient(circle at 88% 16%, rgba(124, 58, 237, 0.28), transparent 0, transparent 24%),
+        radial-gradient(circle at 76% 82%, rgba(20, 184, 166, 0.24), transparent 0, transparent 22%),
+        radial-gradient(circle at 20% 84%, rgba(244, 114, 182, 0.18), transparent 0, transparent 18%),
+        linear-gradient(135deg, #0f172a 0%, #182b52 34%, #1d4ed8 68%, #0f766e 100%);
+    }
+
+    .auth-shell {
+      inline-size: min(980px, 100%);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+
+    .intro {
+      padding: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(241,245,255,0.84));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+    }
+
+    .intro::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -30px auto;
+      inline-size: 140px;
+      block-size: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.22), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.14);
+    }
+
+    h1 {
+      margin: 10px 0 8px;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      line-height: 1.1;
+    }
+
+    .lead,
+    .auth-copy,
+    .meta,
+    .switch-link {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .lead { margin: 0; font-size: 0.95rem; }
+    .auth-copy { margin: 0; font-size: 0.88rem; }
+    .meta { margin: 0; font-size: 0.78rem; }
+
+    .feature-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,255,0.86));
+    }
+
+    .feature-list strong {
+      display: block;
+      margin-block-end: 4px;
+      font-size: 0.92rem;
+    }
+
+    .feature-list span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .auth-card {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,255,0.9));
+    }
+
+    .auth-card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-block-end: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    input {
+      inline-size: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 14px;
+      padding: 12px 13px;
+      font: inherit;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.14);
+      border-color: rgba(37, 99, 235, 0.34);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .toggle-row input {
+      inline-size: auto;
+      margin: 0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-block-start: 4px;
+    }
+
+    button,
+    a.button-link {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover,
+    a.button-link:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 22px rgba(76, 81, 191, 0.28);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: rgba(20, 33, 61, 0.05);
+      border: 1px solid var(--line);
+    }
+
+    .button-link.is-disabled,
+    button:disabled {
+      opacity: 0.55;
+      pointer-events: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-box {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      color: var(--muted);
+      font-size: 0.83rem;
+      line-height: 1.5;
+    }
+
+    .status-box[data-state="success"] {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .status-box[data-state="error"] {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+
+    .status-box[data-state="warning"] {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
+
+    .switch-link a {
+      color: var(--primary-2);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    @media (max-inline-size: 900px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      body { place-items: start center; }
+    }
+  </style>
+</head>
+<body data-firebase-enabled="{{ 'true' if firebase_enabled else 'false' }}">
+  <main class="auth-shell">
+    <section class="card intro">
+      <div>
+        <span class="eyebrow">🔐 Secure access</span>
+        <h1>Access the Multi-Agent Research System</h1>
+        <p class="lead">Sign in to explore the autonomous problem-solving platform for planning, reasoning, tool use, and evaluation.</p>
+      </div>
+
+      <ul class="feature-list">
+        <li><strong>Protected workspace</strong><span>Only signed-in users can access the main app dashboard.</span></li>
+        <li><strong>Fast problem solving</strong><span>Run planning, budgeting, geometry, and Python analysis from one place.</span></li>
+        <li><strong>Research-ready workflow</strong><span>Plan → Act → Observe → Reflect with live metrics and recent activity tracking.</span></li>
+      </ul>
+    </section>
+
+    <section class="card auth-card">
+      <h2>Sign in</h2>
+      <p class="auth-copy">Enter your email and password to continue.</p>
+
+      <form id="signin-form" novalidate>
+        <div>
+          <label for="auth-email">Email</label>
+          <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+
+        <div>
+          <label for="auth-password">Password</label>
+          <input id="auth-password" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required>
+        </div>
+
+        <label class="toggle-row" for="show-password-toggle">
+          <input id="show-password-toggle" type="checkbox">
+          <span>Show password</span>
+        </label>
+
+        <div class="actions">
+          <button class="primary" type="submit" id="signin-button">Sign in</button>
+          <a class="button-link secondary is-disabled" href="/app" id="open-app-link" aria-disabled="true">Open app</a>
+        </div>
+      </form>
+
+      <div class="status-box" id="auth-status">{% if firebase_enabled %}Enter your email and password to sign in to the Multi-Agent Research System.{% else %}Add your Firebase settings to `.env` to enable login.{% endif %}</div>
+      <p class="switch-link">Need an account? <a href="/signup">Create one here</a>.</p>
+      <p class="meta">After successful login, you will be redirected to the main app page automatically.</p>
+    </section>
+  </main>
+
+  <script id="firebase-config" type="application/json">{{ firebase_config_json | safe }}</script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseEnabled = document.body.dataset.firebaseEnabled === "true";
+    const firebaseConfig = JSON.parse(document.getElementById("firebase-config")?.textContent || "{}");
+    const form = document.getElementById("signin-form");
+    const authEmail = document.getElementById("auth-email");
+    const authPassword = document.getElementById("auth-password");
+    const showPasswordToggle = document.getElementById("show-password-toggle");
+    const signinButton = document.getElementById("signin-button");
+    const openAppLink = document.getElementById("open-app-link");
+    const authStatus = document.getElementById("auth-status");
+
+    function setStatus(message, state = "info") {
+      authStatus.textContent = message;
+      authStatus.dataset.state = state;
+    }
+
+    function setAppAccessCookie(enabled, email = "", displayName = "") {
+      if (enabled) {
+        document.cookie = "app_access=1; Path=/; SameSite=Lax";
+        document.cookie = "auth_mode=firebase; Path=/; SameSite=Lax";
+        document.cookie = `session_user=${encodeURIComponent(email || "signed-in-user")}; Path=/; SameSite=Lax`;
+        document.cookie = `display_name=${encodeURIComponent(displayName || email || "User")}; Path=/; SameSite=Lax`;
+        openAppLink.classList.remove("is-disabled");
+        openAppLink.setAttribute("aria-disabled", "false");
+      } else {
+        document.cookie = "app_access=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "auth_mode=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "session_user=; Path=/; Max-Age=0; SameSite=Lax";
+        document.cookie = "display_name=; Path=/; Max-Age=0; SameSite=Lax";
+        openAppLink.classList.add("is-disabled");
+        openAppLink.setAttribute("aria-disabled", "true");
+      }
+    }
+
+    function toFriendlyAuthMessage(error, fallbackMessage) {
+      const code = String(error?.code || "");
+      const rawMessage = String(error?.message || "");
+
+      if (code.includes("configuration-not-found") || rawMessage.includes("CONFIGURATION_NOT_FOUND")) {
+        return "Firebase Authentication is not enabled for this project. In Firebase Console, open Authentication → Get started → Sign-in method and enable Email/Password.";
+      }
+      if (code.includes("operation-not-allowed")) {
+        return "Email/Password sign-in is disabled. Enable it in Firebase Console → Authentication → Sign-in method.";
+      }
+      if (code.includes("unauthorized-domain")) {
+        return "This local URL is not authorized in Firebase. Add localhost and 127.0.0.1 under Authentication → Settings → Authorized domains.";
+      }
+      if (code.includes("invalid-api-key")) {
+        return "The Firebase API key is invalid. Recheck the values in your `.env` file.";
+      }
+      return rawMessage || fallbackMessage;
+    }
+
+    function readCredentials() {
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+
+      if (!email && !password) {
+        setStatus("Please enter your email and password to continue.", "warning");
+        authEmail.focus();
+        return null;
+      }
+      if (!email) {
+        setStatus("Please enter your email address.", "warning");
+        authEmail.focus();
+        return null;
+      }
+      if (!password) {
+        setStatus("Please enter your password.", "warning");
+        authPassword.focus();
+        return null;
+      }
+      if (password.length < 6) {
+        setStatus("Password must be at least 6 characters.", "warning");
+        authPassword.focus();
+        return null;
+      }
+      return { email, password };
+    }
+
+    showPasswordToggle.addEventListener("change", () => {
+      authPassword.type = showPasswordToggle.checked ? "text" : "password";
+    });
+
+    setAppAccessCookie(false);
+
+    if (!firebaseEnabled) {
+      signinButton.disabled = true;
+      setStatus("Firebase is not configured yet. Add FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, and FIREBASE_APP_ID to `.env`.", "warning");
+    } else {
+      try {
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            const displayName = user.displayName || user.email || "User";
+            setAppAccessCookie(true, user.email || "signed-in-user", displayName);
+            setStatus(`Signed in as ${displayName}. Redirecting to the app...`, "success");
+            window.setTimeout(() => { window.location.href = "/app"; }, 500);
+          } else {
+            setAppAccessCookie(false);
+          }
+        });
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const credentials = readCredentials();
+          if (!credentials) return;
+
+          try {
+            signinButton.disabled = true;
+            const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+            const displayName = result.user.displayName || result.user.email || credentials.email;
+            setAppAccessCookie(true, result.user.email || credentials.email, displayName);
+            setStatus(`Welcome back, ${displayName}. Opening app...`, "success");
+            window.location.href = "/app";
+          } catch (error) {
+            setStatus(toFriendlyAuthMessage(error, "Sign in failed."), "error");
+            console.error(error);
+          } finally {
+            signinButton.disabled = false;
+          }
+        });
+      } catch (error) {
+        setAppAccessCookie(false);
+        signinButton.disabled = true;
+        openAppLink.href = "/";
+        setStatus(error.message || "Firebase failed to initialize.", "error");
+      }
+    }
+  </script>
+</body>
+</html>

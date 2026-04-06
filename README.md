@@ -1,6 +1,28 @@
-# Multi-Agent Research API
+# Design and Evaluation of a Tool-Using Autonomous Multi-Agent AI System for Goal-Directed Problem Solving
 
-A FastAPI-based service wrapping a CrewAI multi-agent workflow. The system uses four specialized agents (strategic planner, tool executor, quality observer, and reflective analyst) to solve complex problems through collaborative reasoning.
+A FastAPI + CrewAI research project that evaluates whether structured multi-agent reasoning with tool use improves reliability over a standard single-agent approach.
+
+## Members
+- Abdulrazig Mohammed
+- Member 1
+- Member 2
+
+## Abstract
+This project develops and tests an autonomous AI system designed for advanced tool use and structured reasoning. The workflow uses a CrewAI multi-agent framework with a locally hosted or cloud-backed LLM and follows a `Plan → Act → Observe → Reflect` loop to solve tasks such as budgeting, Python data analysis, mathematical calculations, and structured decision-making.
+
+## Research Motivation
+The goal is to examine whether planning, tool use, evaluation, and reflection improve:
+- task success rate
+- reasoning consistency
+- error recovery
+- efficiency
+
+## Relevant Works
+- **ReAct** — reason and act prompting
+- **AutoGPT** and **BabyAGI** — autonomous agent architectures
+- **Toolformer** — tool-using language models
+- **CrewAI** and **LangGraph** — multi-agent orchestration frameworks
+- **Ollama** — local LLM deployment for private experimentation
 
 ## Deployment
 

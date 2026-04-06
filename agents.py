@@ -91,8 +91,8 @@ _tools_enabled = not _using_ollama
 # -------- Agents --------
 strategic_planner = Agent(
     role="Planner Agent",
-    goal="Create step-by-step plans to solve problems",
-    backstory="Expert planner",
+    goal="Create a clear step-by-step strategy for goal-directed problem solving before execution begins.",
+    backstory="A strategic coordinator that breaks complex tasks into manageable plans and decides when tools are needed.",
     llm=llm,
     tools=[reasoning_logger_tool] if _tools_enabled else [],
     verbose=True,
@@ -100,8 +100,8 @@ strategic_planner = Agent(
 
 tool_executor = Agent(
     role="Tool Agent",
-    goal="Execute calculations, coding, and data analysis",
-    backstory="Math and programming expert",
+    goal="Use available tools such as calculation, Python execution, and data analysis to solve the assigned task accurately.",
+    backstory="A hands-on problem solver designed for budgeting, analysis, mathematical reasoning, and structured decision support.",
     tools=[calculator_tool, python_executor_tool, data_analysis_tool] if _tools_enabled else [],
     llm=llm,
     verbose=True,
@@ -109,8 +109,8 @@ tool_executor = Agent(
 
 quality_observer = Agent(
     role="Evaluator Agent",
-    goal="Verify correctness of outputs",
-    backstory="Quality assurance specialist",
+    goal="Check the final result for correctness, consistency, and completeness, and identify any mistakes.",
+    backstory="A validation specialist that reviews reasoning quality, verifies outputs, and flags weak assumptions.",
     llm=llm,
     tools=[calculator_tool] if _tools_enabled else [],
     verbose=True,
@@ -118,8 +118,8 @@ quality_observer = Agent(
 
 reflective_analyst = Agent(
     role="Reflection Agent",
-    goal="Analyze failures and improve future reasoning",
-    backstory="Self-improvement analyst",
+    goal="Reflect on failures or weak spots and suggest improvements for better future performance.",
+    backstory="An improvement-focused analyst that strengthens reliability through error recovery and reflective reasoning.",
     llm=llm,
     tools=[reasoning_logger_tool] if _tools_enabled else [],
     verbose=True,

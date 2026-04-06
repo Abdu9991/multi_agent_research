@@ -10,23 +10,32 @@ from agents import (
 def build_tasks(problem: str):
     return [
         Task(
-            description=f"Create a plan to solve: {problem}",
+            description=(
+                f"Create a step-by-step plan for this goal-directed task: {problem}. "
+                "Break the problem into manageable actions and identify whether calculation, Python, or data-analysis tools are needed."
+            ),
             agent=strategic_planner,
-            expected_output="A concise step-by-step plan to solve the problem.",
+            expected_output="A concise plan with clear steps, tool choices, and intended outcome.",
         ),
         Task(
-            description=f"Solve the problem using tools: {problem}",
+            description=(
+                f"Execute the plan for: {problem}. Use the available tools when useful, solve the task, and present a clear result with brief reasoning."
+            ),
             agent=tool_executor,
-            expected_output="A computed final answer with brief supporting steps.",
+            expected_output="A practical answer supported by calculations, Python output, or structured reasoning as needed.",
         ),
         Task(
-            description="Evaluate the solution for correctness",
+            description=(
+                "Evaluate the answer for correctness, reasoning consistency, and completeness. Detect mistakes or risky assumptions and note any corrections."
+            ),
             agent=quality_observer,
-            expected_output="A validation note confirming correctness or identifying issues.",
+            expected_output="A validation report confirming correctness or highlighting issues to fix.",
         ),
         Task(
-            description="Reflect on errors and suggest improvements if needed",
+            description=(
+                "Reflect on the outcome and suggest how the system could improve reliability, error recovery, or efficiency on similar future tasks."
+            ),
             agent=reflective_analyst,
-            expected_output="A short reflection with improvement suggestions.",
+            expected_output="A short reflection describing lessons learned and improvements for the next run.",
         ),
     ]

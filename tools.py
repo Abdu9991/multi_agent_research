@@ -14,12 +14,80 @@ import sys
 from io import StringIO
 import contextlib
 
+
+def _ensure_non_negative(value: float, name: str) -> float:
+    value = float(value)
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")
+    return value
+
+
+def _circle_area(radius: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    return math.pi * radius ** 2
+
+
+def _circle_circumference(radius: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    return 2 * math.pi * radius
+
+
+def _circle_radius_from_area(area: float) -> float:
+    area = _ensure_non_negative(area, "area")
+    return math.sqrt(area / math.pi)
+
+
+def _circle_radius_from_circumference(circumference: float) -> float:
+    circumference = _ensure_non_negative(circumference, "circumference")
+    return circumference / (2 * math.pi)
+
+
+def _sphere_volume(radius: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    return (4 / 3) * math.pi * radius ** 3
+
+
+def _sphere_surface_area(radius: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    return 4 * math.pi * radius ** 2
+
+
+def _sphere_radius_from_volume(volume: float) -> float:
+    volume = _ensure_non_negative(volume, "volume")
+    return ((3 * volume) / (4 * math.pi)) ** (1 / 3)
+
+
+def _cylinder_volume(radius: float, height: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    height = _ensure_non_negative(height, "height")
+    return math.pi * radius ** 2 * height
+
+
+def _cylinder_surface_area(radius: float, height: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    height = _ensure_non_negative(height, "height")
+    return 2 * math.pi * radius * (radius + height)
+
+
+def _cone_volume(radius: float, height: float) -> float:
+    radius = _ensure_non_negative(radius, "radius")
+    height = _ensure_non_negative(height, "height")
+    return (math.pi * radius ** 2 * height) / 3
+
+
 class CalculatorInput(BaseModel):
     expression: str = Field(..., description="Mathematical expression to evaluate")
 
 class CalculatorTool(BaseTool):
     name: str = "Calculator"
-    description: str = "Performs safe mathematical calculations. Supports: +, -, *, /, **, sqrt, sin, cos, tan, log, exp, pi, e"
+    description: str = (
+        "Performs safe mathematical and geometry calculations. Supports arithmetic, "
+        "trigonometry, and helper formulas such as circle_area(radius), "
+        "circle_circumference(radius), circle_radius_from_area(area), "
+        "square_area(side), rectangle_area(width,height), triangle_area(base,height), "
+        "sphere_volume(radius), sphere_surface_area(radius), cylinder_volume(radius,height), "
+        "and cone_volume(radius,height)."
+    )
     args_schema: Type[BaseModel] = CalculatorInput
     
     _operators = {
@@ -39,6 +107,21 @@ class CalculatorTool(BaseTool):
         'log': math.log,
         'abs': abs,
         'round': round,
+        'circle_area': _circle_area,
+        'circle_circumference': _circle_circumference,
+        'circle_radius_from_area': _circle_radius_from_area,
+        'circle_radius_from_circumference': _circle_radius_from_circumference,
+        'square_area': lambda side: _ensure_non_negative(side, "side") ** 2,
+        'square_perimeter': lambda side: 4 * _ensure_non_negative(side, "side"),
+        'rectangle_area': lambda width, height: _ensure_non_negative(width, "width") * _ensure_non_negative(height, "height"),
+        'rectangle_perimeter': lambda width, height: 2 * (_ensure_non_negative(width, "width") + _ensure_non_negative(height, "height")),
+        'triangle_area': lambda base, height: 0.5 * _ensure_non_negative(base, "base") * _ensure_non_negative(height, "height"),
+        'sphere_volume': _sphere_volume,
+        'sphere_surface_area': _sphere_surface_area,
+        'sphere_radius_from_volume': _sphere_radius_from_volume,
+        'cylinder_volume': _cylinder_volume,
+        'cylinder_surface_area': _cylinder_surface_area,
+        'cone_volume': _cone_volume,
     }
     
     _constants = {
